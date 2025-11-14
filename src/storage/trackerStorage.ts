@@ -1,4 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { NativeEventEmitter } from 'react-native';
+
+export const salahDataEventEmitter = new NativeEventEmitter();
 
 const STORAGE_KEY = 'salahTrackerData';
 
@@ -63,6 +66,7 @@ export const saveSalahTrackerData = async (data: SalahTrackerData) => {
   try {
     const jsonValue = JSON.stringify(data);
     await AsyncStorage.setItem(STORAGE_KEY, jsonValue);
+    salahDataEventEmitter.emit('salahDataUpdated');
   } catch (e) {
     console.error("Failed to save Salah tracker data", e);
   }

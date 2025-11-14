@@ -4,6 +4,7 @@ import { ThemeContext } from '../theme/ThemeContext';
 import { useNavigation } from '@react-navigation/native';
 import { SettingsScreenNavigationProp } from '../navigation/types';
 import { ResetSalahScreenNavigationProp } from '../navigation/types';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 interface ThemeColors {
   background: string;
@@ -31,9 +32,12 @@ const SettingsScreen = () => {
         style={styles(colors).button}
         onPress={() => navigation.navigate('Analytics')}
       >
-        <Text style={styles(colors).buttonText}>Analytics</Text>
+        <Text style={styles(colors).buttonText}>Salah Analytics</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles(colors).button}>
+      <TouchableOpacity
+        style={styles(colors).button}
+        onPress={() => navigation.navigate('QazaIntro')}
+      >
         <Text style={styles(colors).buttonText}>Qaza Namaz Tracker</Text>
       </TouchableOpacity>
       <TouchableOpacity
@@ -41,6 +45,13 @@ const SettingsScreen = () => {
         onPress={() => navigation.navigate('ResetSalah')}
       >
         <Text style={styles(colors).buttonText}>Reset Salah Data</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles(colors).prayerTimingsButton}
+        onPress={() => navigation.navigate('PrayerTimings')}
+      >
+        <Ionicons name="time-outline" size={20} color="white" />
+        <Text style={styles(colors).prayerTimingsButtonText}>Prayer Timings</Text>
       </TouchableOpacity>
     </View>
   );
@@ -76,6 +87,20 @@ const styles = (colors: ThemeColors) => StyleSheet.create({
   buttonText: {
     color: colors.white,
     fontSize: 16,
+  },
+  prayerTimingsButton: {
+    flexDirection: 'row',
+    backgroundColor: '#2196F3',
+    padding: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+  },
+  prayerTimingsButtonText: {
+    color: 'white',
+    fontSize: 16,
+    marginLeft: 8,
   },
 });
 

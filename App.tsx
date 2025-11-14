@@ -10,6 +10,9 @@ import SettingsScreen from './src/screens/SettingsScreen'; // Import SettingsScr
 import { ThemesScreen } from './src/screens/ThemesScreen'; // Import ThemesScreen
 import ResetSalahScreen from './src/screens/ResetSalahScreen'; // Import ResetSalahScreen
 import AnalyticsScreen from './src/screens/AnalyticsScreen';
+import QazaIntroScreen from './src/screens/QazaIntroScreen'; // Import QazaIntroScreen
+import QazaTrackerScreen from './src/screens/QazaTrackerScreen'; // Import QazaTrackerScreen
+import PrayerTimingsScreen from './src/screens/PrayerTimingsScreen'; // Import PrayerTimingsScreen
 import { RootStackParamList } from './src/navigation/types'; // Import RootStackParamList
 
 const Stack = createNativeStackNavigator<RootStackParamList>(); // Create a stack navigator
@@ -89,6 +92,45 @@ function AppContent() {
             options={{
               headerShown: true,
               headerTitle: 'Salah Analytics',
+              headerTitleAlign: 'center',
+              headerStyle: {
+                backgroundColor: colors.background,
+              },
+              headerTintColor: colors.headerTitle,
+            }}
+          />
+          <Stack.Screen
+            name="QazaIntro"
+            component={QazaIntroScreen}
+            options={{
+              headerShown: true,
+              headerTitle: 'Qaza Introduction',
+              headerTitleAlign: 'center',
+              headerStyle: {
+                backgroundColor: colors.background,
+              },
+              headerTintColor: colors.headerTitle,
+            }}
+          />
+          <Stack.Screen
+            name="QazaTracker"
+            component={QazaTrackerScreen}
+            options={{
+              headerShown: true,
+              headerTitle: 'Qaza Tracker',
+              headerTitleAlign: 'center',
+              headerStyle: {
+                backgroundColor: colors.background,
+              },
+              headerTintColor: colors.headerTitle,
+            }}
+          />
+          <Stack.Screen
+            name="PrayerTimings"
+            component={PrayerTimingsScreen}
+            options={{
+              headerShown: true,
+              headerTitle: 'Prayer Timings',
               headerTitleAlign: 'center',
               headerStyle: {
                 backgroundColor: colors.background,

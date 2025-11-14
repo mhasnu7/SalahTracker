@@ -1,27 +1,59 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { LineChart, BarChart } from 'react-native-chart-kit';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { Picker } from '@react-native-picker/picker';
+import { subMonths, subYears, startOfMonth, endOfMonth } from 'date-fns';
 import SummaryCard from '../components/SummaryCard';
-import { getMonthlyData, calculateAnalytics } from '../utils/dataHelpers';
+import { getPeriodData, calculateAnalytics } from '../utils/dataHelpers';
+import { salahDataEventEmitter } from '../storage/trackerStorage';
 
 const screenWidth = Dimensions.get('window').width;
 
 const AnalyticsScreen = () => {
   const [analytics, setAnalytics] = useState<any>(null);
+  const [selectedPeriod, setSelectedPeriod] = useState<'1_month' | '3_months' | '6_months' | '1_year'>('3_months');
 
-  const fetchData = async () => {
-    const data = await getMonthlyData(new Date());
-    const calculated = calculateAnalytics(data);
+  const fetchData = useCallback(async () => {
+    const today = new Date();
+    let startDate: Date;
+    const endDate = today;
+
+    switch (selectedPeriod) {
+      case '1_month':
+        startDate = subMonths(today, 1);
+        break;
+      case '3_months':
+        startDate = subMonths(today, 3);
+        break;
+      case '6_months':
+        startDate = subMonths(today, 6);
+        break;
+      case '1_year':
+        startDate = subYears(today, 1);
+        break;
+      default:
+        startDate = subMonths(today, 3); // Default to 3 months
+    }
+
+    const data = await getPeriodData(startDate, endDate);
+    const calculated = calculateAnalytics(data, startDate, endDate);
     setAnalytics(calculated);
-  };
+  }, [selectedPeriod]);
 
   useFocusEffect(
     useCallback(() => {
       fetchData();
     }, [])
   );
+
+  useEffect(() => {
+    const subscription = salahDataEventEmitter.addListener('salahDataUpdated', fetchData);
+    return () => {
+      subscription.remove();
+    };
+  }, []);
 
   if (!analytics) {
     return (
@@ -44,6 +76,16 @@ const AnalyticsScreen = () => {
     <ScrollView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Salah Analytics</Text>
+        <Picker
+          selectedValue={selectedPeriod}
+          style={styles.picker}
+          onValueChange={(itemValue) => setSelectedPeriod(itemValue)}
+        >
+          <Picker.Item label="Last 1 Month" value="1_month" />
+          <Picker.Item label="Last 3 Months" value="3_months" />
+          <Picker.Item label="Last 6 Months" value="6_months" />
+          <Picker.Item label="Last 1 Year" value="1_year" />
+        </Picker>
         <TouchableOpacity onPress={fetchData}>
           <Icon name="refresh-outline" size={24} color="#2196F3" />
         </TouchableOpacity>
@@ -150,6 +192,13 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#2196F3',
+  },
+  picker: {
+    height: 50,
+    width: 150,
+    color: '#EAEAEA',
+    backgroundColor: '#1C1C1C',
+    borderRadius: 10,
   },
   summarySection: {
     flexDirection: 'row',

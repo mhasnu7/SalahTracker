@@ -14,6 +14,9 @@ export type RootStackParamList = {
   Themes: undefined;
   ResetSalah: undefined;
   Analytics: undefined;
+  QazaIntro: undefined;
+  QazaTracker: undefined;
+  PrayerTimings: undefined;
 };
 
 export type RootTabScreenProps<Screen extends keyof RootTabParamList> = BottomTabScreenProps<
@@ -28,3 +31,5 @@ export type TrackerScreenNavigationProp = NativeStackScreenProps<RootStackParamL
 export type ThemesScreenNavigationProp = NativeStackScreenProps<RootStackParamList, 'Themes'>['navigation'];
 
 export type ResetSalahScreenNavigationProp = NativeStackScreenProps<RootStackParamList, 'ResetSalah'>['navigation'];
+export type QazaIntroScreenNavigationProp = NativeStackScreenProps<RootStackParamList, 'QazaIntro'>['navigation'];
+export type QazaTrackerScreenNavigationProp = NativeStackScreenProps<RootStackParamList, 'QazaTracker'>['navigation'];
