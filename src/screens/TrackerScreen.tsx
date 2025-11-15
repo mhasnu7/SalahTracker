@@ -47,7 +47,7 @@ export const TrackerScreen: React.FC = () => {
     }, [fetchSalahData])
   );
 
-  const togglePrayerCompletion = useCallback(
+  const togglePrayerCompletionToday = useCallback(
     async (prayerName: PrayerName) => {
       if (!salahData) return;
 
@@ -65,34 +65,61 @@ export const TrackerScreen: React.FC = () => {
     [salahData]
   );
 
-  const getLast196DaysCompletion = (prayer: PrayerName): boolean[] => {
-    if (!salahData || !salahData[prayer]) return Array(196).fill(false);
+  const togglePrayerCompletionHistorical = useCallback(
+    async (prayerName: PrayerName, date: string) => {
+      if (!salahData) return;
+
+      const updatedData = {
+        ...salahData,
+        [prayerName]: {
+          ...salahData[prayerName],
+          [date]: !salahData[prayerName]?.[date],
+        },
+      };
+      setSalahData(updatedData);
+      await saveSalahTrackerData(updatedData);
+    },
+    [salahData]
+  );
+
+  const getHistoricalCompletionData = (prayer: PrayerName, numberOfDays: number = 90) => {
+    if (!salahData || !salahData[prayer]) {
+      return Array(numberOfDays).fill({ date: '', completed: false });
+    }
 
     const today = new Date();
-    const last196Days: boolean[] = [];
+    const historicalData: { date: string; completed: boolean }[] = [];
 
-    for (let i = 195; i >= 0; i--) {
+    for (let i = numberOfDays - 1; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(today.getDate() - i);
       const formattedDate = `${date.getFullYear()}-${(date.getMonth() + 1)
         .toString()
         .padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
-      last196Days.push(salahData[prayer][formattedDate] || false);
+      historicalData.push({
+        date: formattedDate,
+        completed: salahData[prayer][formattedDate] || false,
+      });
     }
-    return last196Days;
+    return historicalData;
   };
 
   return (
     <SafeAreaView style={styles(colors).safeArea}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
       <View style={styles(colors).header}>
-        <TouchableOpacity style={styles(colors).iconButton} onPress={() => navigation.navigate('Settings')}>
-          <Icon name="settings-outline" size={24} color={colors.headerTitle} />
+        <TouchableOpacity style={styles(colors).iconButton} onPress={() => navigation.getParent()?.navigate('Menu')}>
+          <Icon name="menu-outline" size={24} color={colors.headerTitle} />
         </TouchableOpacity>
-        <Text style={styles(colors).headerTitle}>SalahTracker</Text>
-        <TouchableOpacity style={styles(colors).iconButton}>
-          <Icon name="analytics-outline" size={24} color={colors.headerTitle} />
-        </TouchableOpacity>
+        <Text style={[styles(colors).headerTitle, { flex: 1, textAlign: 'center' }]}>SalahTracker</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <TouchableOpacity style={[styles(colors).iconButton, { marginRight: 5 }]} onPress={() => navigation.getParent()?.navigate('QazaTracker')}>
+            <Text style={{ color: colors.headerTitle, fontSize: 20, fontWeight: 'bold' }}>Q</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles(colors).iconButton} onPress={() => navigation.getParent()?.navigate('Analytics')}>
+            <Icon name="analytics-outline" size={24} color={colors.headerTitle} />
+          </TouchableOpacity>
+        </View>
       </View>
       <ScrollView style={styles(colors).container} contentContainerStyle={styles(colors).contentContainer}>
         {salahData ? (
@@ -101,8 +128,9 @@ export const TrackerScreen: React.FC = () => {
               <PrayerCard
                 prayerName={prayerName}
                 isCompletedToday={salahData[prayerName]?.[getTodayDate()] || false}
-                onToggle={togglePrayerCompletion}
-                last196Days={getLast196DaysCompletion(prayerName)}
+                onToggleToday={togglePrayerCompletionToday}
+                onToggleHistorical={togglePrayerCompletionHistorical}
+                historicalCompletionData={getHistoricalCompletionData(prayerName, 162)}
               />
             </View>
           ))
@@ -132,7 +160,7 @@ const styles = (colors: ThemeColors) => StyleSheet.create({
   header: {
     height: HEADER_HEIGHT,
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'space-between', // Distribute items with space between them
     alignItems: 'center',
     backgroundColor: colors.background,
     paddingHorizontal: 10,
