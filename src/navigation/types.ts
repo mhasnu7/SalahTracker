@@ -6,8 +6,6 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 export type RootTabParamList = {
   Tracker: undefined;
   Calendar: undefined;
-  QuranScreen: undefined; // Added QuranScreen to BottomTabNavigator
-  Menu: undefined;
 };
 
 export type QuranStackParamList = {
@@ -21,6 +19,7 @@ export type RootStackParamList = {
   Quran: NavigatorScreenParams<QuranStackParamList>;
   SurahDetails: { surahNumber: number; surahName: string };
   Settings: undefined;
+  AboutApp: undefined; // Add AboutApp to RootStackParamList
   Themes: undefined;
   ResetSalah: undefined;
   Analytics: undefined;

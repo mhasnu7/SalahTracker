@@ -60,26 +60,6 @@ export const BottomTabs = () => {
           tabBarLabel: 'Calendar',
         }}
       />
-      <Tab.Screen
-        name="QuranScreen" // New tab for Quran
-        component={QuranScreen}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="book-outline" color={color} size={size + 2} />
-          ),
-          tabBarLabel: 'Quran',
-        }}
-      />
-      <Tab.Screen
-        name="Menu"
-        component={MenuScreen}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="menu-outline" color={color} size={size + 2} />
-          ),
-          tabBarLabel: 'Menu',
-        }}
-      />
     </Tab.Navigator>
   );
 };

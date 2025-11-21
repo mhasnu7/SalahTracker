@@ -17,23 +17,23 @@ const MenuScreen = () => {
   const styles = menuStyles(isDark);
 
   // Define Menu Items structure using routes defined in RootStackParamList where applicable
-  const menuItems = [
-    { 
-      title: "Prayer Tracker", 
-      iconName: "clock-check-outline", 
+const menuItems = [
+    {
+      title: "Prayer Tracker",
+      iconName: "clock-check-outline",
       destination: "Tracker" // Existing Tab Route
     },
-    { 
-      title: "Calendar View", 
-      iconName: "calendar-month-outline", 
+    {
+      title: "Calendar View",
+      iconName: "calendar-month-outline",
       destination: "Calendar" // Existing Tab Route
     },
-    { 
-      title: "Qaza Tracker", 
-      iconName: "alert-decagram-outline", 
+    {
+      title: "Qaza Tracker",
+      iconName: "alert-decagram-outline",
       destination: "QazaTracker" // Stack Route
     },
-    { 
+    {
       title: "Prayer Timings",
       iconName: "weather-sunset-up",
       destination: "PrayerTimings" // Stack Route
@@ -43,20 +43,20 @@ const MenuScreen = () => {
       iconName: "book-open-variant", // Using a relevant icon from MaterialCommunityIcons
       destination: "Quran" // New Stack Navigator Route
     },
-    { 
-      title: "Analytics & Insights", 
-      iconName: "chart-line", 
+    {
+      title: "Analytics & Insights",
+      iconName: "chart-line",
       destination: "Analytics" // Stack Route
     },
-    { 
-      title: "Settings", 
-      iconName: "cog-outline", 
+    {
+      title: "Settings",
+      iconName: "cog-outline",
       destination: "Settings" // Stack Route defined in types.ts
     },
-    { 
-      title: "About App", 
-      iconName: "information-outline", 
-      destination: "AboutApp" // Assuming route name, needs registration if not present
+    {
+      title: "About App",
+      iconName: "information-outline",
+      destination: "AboutApp" // Stack Route for AboutAppScreen
     },
   ];
 
@@ -66,11 +66,6 @@ const MenuScreen = () => {
     console.log(`Navigating to: ${destination}`);
     if (destination === "Tracker" || destination === "Calendar") {
       navigation.navigate("BottomTabs", { screen: destination });
-    } else if (destination === "Menu") {
-      // If navigating to 'Menu' from within 'Menu', do nothing or reset to top of stack
-      // For now, we'll assume this button shouldn't navigate to itself as a tab
-      // if it's already on the menu tab.
-      console.log("Already on Menu Screen, not navigating.");
     } else {
       // For other stack navigators like 'Quran', 'Settings', etc.
       // Need to handle navigation to a new stack if it's a nested navigator
@@ -89,7 +84,7 @@ const MenuScreen = () => {
         <Text style={styles.subtitle}>Explore powerful features</Text>
       </View>
       
-      <ScrollView contentContainerStyle={styles.cardGrid} bounces={false}>
+      <ScrollView contentContainerStyle={[styles.cardGrid, { flexGrow: 1 }]} bounces={false}>
         {menuItems.map((item, index) => (
           <View key={item.title} style={{ flexBasis: '50%' }}>
             <Animated.View
@@ -104,7 +99,21 @@ const MenuScreen = () => {
             </Animated.View>
           </View>
         ))}
+        {/* Spacer to push content up if needed and allow scroll */}
+        <View style={{ height: 100 }} />
       </ScrollView>
+
+      {/* Home Button at the bottom, centrally placed */}
+      <Animated.View
+        entering={SlideInUp.delay(menuItems.length * 100 + 100).duration(400)}
+        style={styles.bottomHomeButtonContainer}
+      >
+        <MenuCard
+          title="Home"
+          iconName="home-outline"
+          onPress={() => handlePress("Tracker")}
+        />
+      </Animated.View>
     </View>
   );
 };

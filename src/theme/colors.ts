@@ -15,7 +15,8 @@ export interface ColorScheme {
   buttonText: string;
   shadow: string;
   primary: string;
-  textSecondary: string; // Add textSecondary here
+  textSecondary: string;
+  primaryText: string; // Add primaryText here
 }
 
 export const lightColors: ColorScheme = {
@@ -35,7 +36,8 @@ export const lightColors: ColorScheme = {
   buttonText: '#FFFFFF',
   shadow: '#000000',
   primary: '#1565C0',
-  textSecondary: '#666666', // Added missing property
+  textSecondary: '#666666',
+  primaryText: '#000000', // Define primaryText for light theme
 };
 
 export const darkColors: ColorScheme = {
@@ -55,5 +57,6 @@ export const darkColors: ColorScheme = {
   buttonText: '#FFFFFF',
   shadow: '#FFFFFF',
   primary: '#4FC3F7',
-  textSecondary: '#D0D0D0', // Added missing property
+  textSecondary: '#D0D0D0',
+  primaryText: '#FFFFFF', // Define primaryText for dark theme
 };

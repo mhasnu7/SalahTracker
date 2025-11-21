@@ -14,21 +14,31 @@ export const menuStyles = (isDark: boolean) => {
     header: {
       padding: 20,
       paddingBottom: 10,
+      alignItems: 'center', // Center items horizontally
     },
     title: {
       fontSize: 32,
       fontWeight: 'bold',
       color: colors.headingBlue, // App title color blue for headings
+      textAlign: 'center', // Center text horizontally
     },
     subtitle: {
         fontSize: 16,
         color: colors.secondaryText,
         marginTop: 4,
+        textAlign: 'center', // Center text horizontally
     },
     cardGrid: {
       flexDirection: 'row',
       flexWrap: 'wrap',
       paddingHorizontal: 5,
+    },
+    bottomHomeButtonContainer: {
+      position: 'absolute',
+      bottom: 20, // Adjust as needed for spacing from the bottom
+      alignSelf: 'center', // Center horizontally
+      width: '45%', // Adjust width to match other cards or desired size
+      aspectRatio: 1, // Keep aspect ratio for square cards
     },
     // Note: Individual card styling (shadow/border/animation) is handled in MenuCard.tsx
   });

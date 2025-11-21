@@ -17,6 +17,7 @@ import QazaTrackerScreen from './src/screens/QazaTrackerScreen';
 import PrayerTimingsScreen from './src/screens/PrayerTimingsScreen';
 import QuranSurahListScreen from './src/screens/QuranSurahList'; // Import QuranSurahListScreen
 import SurahDetailsScreen from './src/screens/SurahDetails'; // Import SurahDetailsScreen
+import AboutAppScreen from './src/screens/AboutAppScreen'; // Import AboutAppScreen
 import { RootStackParamList, QuranStackParamList } from './src/navigation/types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -183,6 +184,17 @@ function AppContent() {
               headerStyle: { backgroundColor: colors.background },
               headerTintColor: colors.headerTitle,
             })}
+          />
+          <Stack.Screen
+            name="AboutApp"
+            component={AboutAppScreen}
+            options={{
+              headerShown: true,
+              headerTitle: 'About App',
+              headerTitleAlign: 'center',
+              headerStyle: { backgroundColor: colors.background },
+              headerTintColor: colors.headerTitle,
+            }}
           />
         </Stack.Navigator>
       </NavigationContainer>
