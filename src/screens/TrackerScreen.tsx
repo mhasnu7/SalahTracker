@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useContext } from 'react';
-import { useFocusEffect, useNavigation } from '@react-navigation/native'; // Import useNavigation
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { View, Text, StyleSheet, ScrollView, StatusBar, Dimensions, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { RootTabScreenProps } from '../navigation/types'; // Import RootTabScreenProps
+import { RootTabScreenProps } from '../navigation/types';
 import { PrayerCard } from '../components/PrayerCard';
 import {
   loadSalahTrackerData,
@@ -18,22 +18,14 @@ const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const PRAYER_NAMES: PrayerName[] = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
 
 // --- Constants for Layout ---
-const STATUS_BAR_HEIGHT = 20;
-const BOTTOM_NAV_HEIGHT = 60;
 const HEADER_HEIGHT = 40;
-const PRAYER_NAME_HEIGHT = 16;
 const CARD_HORIZONTAL_PADDING = 4;
-const CARD_INNER_PADDING = 2;
-const CARD_MARGIN_VERTICAL = 3;
-const CARD_BORDER_RADIUS = 9;
-
-const AVAILABLE_HEIGHT_FOR_CARDS_AREA = screenHeight - STATUS_BAR_HEIGHT - HEADER_HEIGHT - BOTTOM_NAV_HEIGHT;
-const CARD_HEIGHT = (AVAILABLE_HEIGHT_FOR_CARDS_AREA / PRAYER_NAMES.length) - (CARD_MARGIN_VERTICAL * 2);
+const GRID_DOTS_COUNT = 189; // 7 rows * 27 columns
 
 
 export const TrackerScreen: React.FC = () => {
   const { colors, isDark } = useContext(ThemeContext);
-  const navigation = useNavigation<RootTabScreenProps<'Tracker'>['navigation']>(); // Initialize navigation
+  const navigation = useNavigation<RootTabScreenProps<'Tracker'>['navigation']>();
   const [salahData, setSalahData] = useState<SalahTrackerData | null>(null);
 
   const fetchSalahData = useCallback(async () => {
@@ -82,25 +74,30 @@ export const TrackerScreen: React.FC = () => {
     [salahData]
   );
 
-  const getHistoricalCompletionData = (prayer: PrayerName, numberOfDays: number = 90) => {
+  const getHistoricalCompletionData = (prayer: PrayerName, numberOfDays: number = GRID_DOTS_COUNT) => {
     if (!salahData || !salahData[prayer]) {
       return Array(numberOfDays).fill({ date: '', completed: false });
     }
 
-    const today = new Date();
     const historicalData: { date: string; completed: boolean }[] = [];
+    const today = new Date();
 
     for (let i = numberOfDays - 1; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(today.getDate() - i);
-      const formattedDate = `${date.getFullYear()}-${(date.getMonth() + 1)
-        .toString()
-        .padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+
+      const year = date.getFullYear();
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const day = date.getDate().toString().padStart(2, '0');
+      const formattedDate = `${year}-${month}-${day}`;
+
       historicalData.push({
         date: formattedDate,
         completed: salahData[prayer][formattedDate] || false,
       });
     }
+
+    // Data is sorted [Oldest day -> Today]
     return historicalData;
   };
 
@@ -108,14 +105,33 @@ export const TrackerScreen: React.FC = () => {
     <SafeAreaView style={styles(colors).safeArea}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
       <View style={styles(colors).header}>
-        <TouchableOpacity style={styles(colors).iconButton} onPress={() => navigation.getParent()?.navigate('Menu')}>
+
+        {/* === UPDATED MENU BUTTON LOGIC (Assumes Drawer Navigator) === */}
+        <TouchableOpacity
+          style={styles(colors).iconButton}
+          onPress={() => {
+            // Check if toggleDrawer function exists (common for Drawer Navigators)
+            if (navigation.getParent() && 'toggleDrawer' in navigation.getParent()) {
+              (navigation.getParent() as any).toggleDrawer();
+            } else {
+              // Fallback to navigate if it's a stack screen in the parent
+              navigation.getParent()?.navigate('Menu');
+            }
+          }}
+        >
           <Icon name="menu-outline" size={24} color={colors.headerTitle} />
         </TouchableOpacity>
+        {/* === END MENU BUTTON LOGIC === */}
+
         <Text style={[styles(colors).headerTitle, { flex: 1, textAlign: 'center' }]}>SalahTracker</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+
+          {/* Qaza Tracker Navigation */}
           <TouchableOpacity style={[styles(colors).iconButton, { marginRight: 5 }]} onPress={() => navigation.getParent()?.navigate('QazaTracker')}>
             <Text style={{ color: colors.headerTitle, fontSize: 20, fontWeight: 'bold' }}>Q</Text>
           </TouchableOpacity>
+
+          {/* Analytics Navigation */}
           <TouchableOpacity style={styles(colors).iconButton} onPress={() => navigation.getParent()?.navigate('Analytics')}>
             <Icon name="analytics-outline" size={24} color={colors.headerTitle} />
           </TouchableOpacity>
@@ -123,17 +139,23 @@ export const TrackerScreen: React.FC = () => {
       </View>
       <ScrollView style={styles(colors).container} contentContainerStyle={styles(colors).contentContainer}>
         {salahData ? (
-          PRAYER_NAMES.map((prayerName) => (
-            <View key={prayerName} style={{ height: CARD_HEIGHT, marginBottom: CARD_MARGIN_VERTICAL }}>
-              <PrayerCard
-                prayerName={prayerName}
-                isCompletedToday={salahData[prayerName]?.[getTodayDate()] || false}
-                onToggleToday={togglePrayerCompletionToday}
-                onToggleHistorical={togglePrayerCompletionHistorical}
-                historicalCompletionData={getHistoricalCompletionData(prayerName, 162)}
-              />
-            </View>
-          ))
+          PRAYER_NAMES.map((prayerName) => {
+            const history = getHistoricalCompletionData(prayerName, GRID_DOTS_COUNT);
+            const isCompletedToday = history[history.length - 1]?.completed || false;
+
+            return (
+              <View
+                key={prayerName}
+              >
+                <PrayerCard
+                  prayerName={prayerName}
+                  isCompletedToday={isCompletedToday}
+                  onToggle={togglePrayerCompletionToday}
+                  historicalCompletionData={history}
+                />
+              </View>
+            )
+          })
         ) : (
           <Text style={styles(colors).loadingText}>Loading Salah data...</Text>
         )}
@@ -160,7 +182,7 @@ const styles = (colors: ThemeColors) => StyleSheet.create({
   header: {
     height: HEADER_HEIGHT,
     flexDirection: 'row',
-    justifyContent: 'space-between', // Distribute items with space between them
+    justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: colors.background,
     paddingHorizontal: 10,

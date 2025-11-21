@@ -12,33 +12,39 @@ const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const PRAYER_NAMES: PrayerName[] = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
 
 // --- Constants for Extreme Compact Layout ---
-const STATUS_BAR_HEIGHT = 20; // Estimated status bar height
-const BOTTOM_NAV_HEIGHT = 60; // Estimated bottom navigation height (assuming a bottom tab navigator)
-const HEADER_HEIGHT = 30; // Further reduced header height
-const PRAYER_NAME_HEIGHT = 16; // Further reduced prayer name height
-const CARD_HORIZONTAL_PADDING = 4; // Further reduced horizontal padding
-const CARD_INNER_PADDING = 2; // Further reduced inner padding
-const CARD_MARGIN_VERTICAL = 3; // Increased margin between cards for clear space
-const CARD_BORDER_RADIUS = 9; // Smaller border radius
+const STATUS_BAR_HEIGHT = 20;
+const BOTTOM_NAV_HEIGHT = 60;
+const HEADER_HEIGHT = 30;
+const PRAYER_NAME_HEIGHT = 16;
+const CARD_HORIZONTAL_PADDING = 4;
+const CARD_INNER_PADDING = 2;
+const CARD_MARGIN_VERTICAL = 3;
 
 // Calculate vertical dimensions for day cells to fit 5 cards
 const AVAILABLE_HEIGHT_FOR_CARDS_AREA = screenHeight - STATUS_BAR_HEIGHT - HEADER_HEIGHT - BOTTOM_NAV_HEIGHT;
 const TOTAL_VERTICAL_SPACE_PER_CARD_EXCEPT_GRID = PRAYER_NAME_HEIGHT + (CARD_INNER_PADDING * 2) + CARD_MARGIN_VERTICAL;
 const HEIGHT_PER_CARD_FOR_GRID = (AVAILABLE_HEIGHT_FOR_CARDS_AREA / PRAYER_NAMES.length) - TOTAL_VERTICAL_SPACE_PER_CARD_EXCEPT_GRID;
 
-const NUM_DAY_ROWS_PER_MONTH = 6; // Max 6 weeks in a month
-const DAY_CELL_VERTICAL_MARGIN = 0.15; // Very small vertical margin for day cells
+const NUM_WEEKDAY_ROWS = 7; // Su through Sa
+const DAY_CELL_VERTICAL_MARGIN = 0.05; // Reduced vertical margin for compactness
 
-const DAY_CELL_HEIGHT = Math.floor(HEIGHT_PER_CARD_FOR_GRID / NUM_DAY_ROWS_PER_MONTH) - (DAY_CELL_VERTICAL_MARGIN * 2);
+// 1. Height of the cell itself (circle)
+const DAY_CELL_BASE_HEIGHT = Math.floor(HEIGHT_PER_CARD_FOR_GRID / NUM_WEEKDAY_ROWS);
 
-// Calculate horizontal dimensions for day cells
-const WEEKDAY_COLUMN_WIDTH = 20; // Fixed width for the vertical weekday column
+// 2. Total required height for one row (Cell + 2*Margin)
+const DAY_CELL_ROW_HEIGHT = DAY_CELL_BASE_HEIGHT;
+
+// Re-calculate DAY_CELL_SIZE to use the base height, ensuring it fits vertically
+const DAY_CELL_HEIGHT = DAY_CELL_BASE_HEIGHT - (DAY_CELL_VERTICAL_MARGIN * 2);
+
+const WEEKDAY_COLUMN_WIDTH = 20;
 const TOTAL_MONTHS_DISPLAYED = 3;
-const AVAILABLE_WIDTH_FOR_MONTHS = screenWidth - (CARD_HORIZONTAL_PADDING * 2) - (CARD_INNER_PADDING * 2) - WEEKDAY_COLUMN_WIDTH - (TOTAL_MONTHS_DISPLAYED * 2); // Account for margins between months
+const AVAILABLE_WIDTH_FOR_MONTHS = screenWidth - (CARD_HORIZONTAL_PADDING * 2) - (CARD_INNER_PADDING * 2) - WEEKDAY_COLUMN_WIDTH - (TOTAL_MONTHS_DISPLAYED * 2);
 const MONTH_BLOCK_WIDTH = AVAILABLE_WIDTH_FOR_MONTHS / TOTAL_MONTHS_DISPLAYED;
-const DAY_CELL_WIDTH = Math.floor(MONTH_BLOCK_WIDTH / 7) - 2; // Account for very small horizontal margins
+const DAY_CELL_WIDTH = Math.floor(MONTH_BLOCK_WIDTH / 7) - 2;
 
-const DAY_CELL_SIZE = Math.min(DAY_CELL_HEIGHT, DAY_CELL_WIDTH); // Use the smaller of the two to ensure fit
+const DAY_CELL_SIZE = Math.min(DAY_CELL_HEIGHT, DAY_CELL_WIDTH);
+
 
 // --- Component Definitions ---
 
@@ -65,7 +71,6 @@ const DayCell: React.FC<DayCellProps> = ({ date, isCompleted, onToggle, prayerNa
   const isFutureDate = new Date(date) > new Date(todayStr);
   const isCurrentDay = date === todayStr;
 
-  const bgColor = isCompleted ? colors.primaryAccent : colors.cardBackground;
   const textColor = isFutureDate ? colors.grey : (isCompleted ? colors.background : colors.secondaryText);
 
   return (
@@ -76,12 +81,21 @@ const DayCell: React.FC<DayCellProps> = ({ date, isCompleted, onToggle, prayerNa
           backgroundColor: isCompleted ? colors.primaryAccent : colors.cardBackground,
           borderColor: isCurrentDay ? colors.primaryAccent : colors.cardBackground,
           borderWidth: isCurrentDay ? 1 : 0,
+          marginVertical: DAY_CELL_VERTICAL_MARGIN, // Vertical padding for date cells
         },
       ]}
       onPress={() => !isFutureDate && onToggle(prayerName, date)}
       disabled={isFutureDate}
     >
-      <Text style={[styles(colors).dayText, { color: textColor, fontWeight: isCurrentDay ? 'bold' : 'normal' }]}>
+      <Text
+        style={[
+          styles(colors).dayText,
+          {
+            color: textColor,
+            fontWeight: isCurrentDay ? 'bold' : 'normal'
+          }
+        ]}
+      >
         {date.split('-')[2]}
       </Text>
     </TouchableOpacity>
@@ -103,9 +117,7 @@ const MonthGrid: React.FC<MonthGridProps> = ({ monthData, onToggle, prayerName }
     <View style={styles(colors).monthGridContainer}>
       <Text style={styles(colors).monthGridTitle}>{monthTitle}</Text>
       <View style={styles(colors).calendarGrid}>
-        {Array.from({ length: 7 }).map((_, dayOfWeekIndex) => { // 7 rows for days of the week
-          const firstMonthInfo = monthData.find(d => !d.date.startsWith('empty'));
-          const monthTitle = firstMonthInfo ? `${firstMonthInfo.monthName.substring(0, 3)} ${firstMonthInfo.year % 100}` : '';
+        {Array.from({ length: 7 }).map((_, dayOfWeekIndex) => { // 7 rows for days of the week (Su, Mo, etc.)
           return (
             <View key={`${prayerName}-${monthTitle}-${dayOfWeekIndex}`} style={styles(colors).calendarRow}>
               {Array.from({ length: 5 }).map((_, weekIndex) => { // 5 columns for weeks
@@ -120,7 +132,7 @@ const MonthGrid: React.FC<MonthGridProps> = ({ monthData, onToggle, prayerName }
                 }
 
                 if (!item) {
-                  return <View key={`empty-${dayOfWeekIndex}-${weekIndex}`} style={styles(colors).miniDayCellPlaceholder} />;
+                  return <View key={`empty-${dayOfWeekIndex}-${weekIndex}`} style={styles(colors).dayCellPlaceholder} />;
                 }
                 return (
                   <DayCell
@@ -140,6 +152,19 @@ const MonthGrid: React.FC<MonthGridProps> = ({ monthData, onToggle, prayerName }
   );
 };
 
+// --- Weekday Label Component Refactor for Alignment ---
+interface WeekdayLabelProps {
+  day: string;
+  colors: ThemeColors;
+}
+
+const WeekdayLabel: React.FC<WeekdayLabelProps> = ({ day, colors }) => (
+    <View style={styles(colors).weekdayContainer}>
+      <Text style={styles(colors).weekdayText}>
+        {day}
+      </Text>
+    </View>
+);
 // --- Main Screen Component ---
 
 export const CalendarScreen: React.FC = () => {
@@ -178,7 +203,7 @@ export const CalendarScreen: React.FC = () => {
 
         allMonthsDataForPrayer.push(monthDays);
       }
-      
+
       return { prayerName, monthsData: allMonthsDataForPrayer };
     });
     setPrayerQuarters(allPrayerQuarters);
@@ -196,7 +221,7 @@ export const CalendarScreen: React.FC = () => {
     async (prayerName: PrayerName, date: string) => {
       const todayStr = getTodayDate();
       const isFutureDate = new Date(date) > new Date(todayStr);
-      if (!salahData || isFutureDate) return; // Prevent toggling for future dates
+      if (!salahData || isFutureDate) return;
 
       const updatedData = {
         ...salahData,
@@ -212,7 +237,7 @@ export const CalendarScreen: React.FC = () => {
     [salahData, generatePrayerQuarters]
   );
 
-  const handleMarkAllComplete = useCallback( // This function will now toggle today's prayer
+  const handleMarkAllComplete = useCallback(
     async (prayerName: PrayerName) => {
       if (!salahData) return;
       const updatedData = { ...salahData };
@@ -291,9 +316,8 @@ export const CalendarScreen: React.FC = () => {
                     <View style={styles(colors).quarterViewWrapper}>
                       <View style={styles(colors).weekdaysColumn}>
                         {weekDays.map((day) => (
-                          <Text key={day} style={styles(colors).weekdayTextVertical}>
-                            {day}
-                          </Text>
+                          // Use the new WeekdayLabel component for improved alignment
+                          <WeekdayLabel key={day} day={day} colors={colors} />
                         ))}
                       </View>
                       <View style={styles(colors).threeMonthsGridContainer}>
@@ -322,15 +346,6 @@ export const CalendarScreen: React.FC = () => {
 };
 
 // --- Styles ---
-interface ThemeColors {
-  background: string;
-  cardBackground: string;
-  primaryAccent: string;
-  headerTitle: string;
-  secondaryText: string;
-  white: string;
-  grey: string;
-}
 
 const styles = (colors: ThemeColors) => StyleSheet.create({
   safeArea: {
@@ -371,7 +386,7 @@ const styles = (colors: ThemeColors) => StyleSheet.create({
   prayerCardContainer: {
     marginBottom: CARD_MARGIN_VERTICAL,
     backgroundColor: colors.cardBackground,
-    borderRadius: CARD_BORDER_RADIUS,
+    borderRadius: 9,
     paddingVertical: CARD_INNER_PADDING,
     paddingHorizontal: CARD_INNER_PADDING * 2,
     elevation: 3,
@@ -400,21 +415,29 @@ const styles = (colors: ThemeColors) => StyleSheet.create({
   },
   weekdaysColumn: {
     flexDirection: 'column',
-    justifyContent: 'space-around',
+    justifyContent: 'flex-start',
     marginRight: 4,
-    paddingTop: 18, // Adjust to align with the first row of dates
+    paddingTop: 0,
   },
-  weekdayTextVertical: {
+  // Weekday container style adjustment
+  weekdayContainer: {
+    height: DAY_CELL_ROW_HEIGHT,
+    width: WEEKDAY_COLUMN_WIDTH,
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    paddingBottom: 3,
+  },
+  weekdayText: {
     fontSize: 9,
     color: colors.secondaryText,
-    fontWeight: 'bold',
-    height: DAY_CELL_SIZE + (DAY_CELL_VERTICAL_MARGIN * 2),
-    textAlignVertical: 'center',
+    fontWeight: 'normal',
   },
   threeMonthsGridContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     flex: 1,
+    // This is the line that pushes the calendar grid up to align with the weekdays
+    marginTop: -12,
   },
   monthContainer: {
     flex: 1,
@@ -427,41 +450,34 @@ const styles = (colors: ThemeColors) => StyleSheet.create({
     fontSize: 10,
     fontWeight: 'bold',
     color: colors.secondaryText,
-    marginBottom: 0,
+    marginBottom: 2,
     textAlign: 'center',
   },
   calendarGrid: {
-    flexDirection: 'column', // Main container is column for 7 rows
+    flexDirection: 'column',
     width: '100%',
   },
   calendarRow: {
-    flexDirection: 'row', // Each row contains 5 day cells
+    flexDirection: 'row',
     justifyContent: 'space-around',
     width: '100%',
+    minHeight: DAY_CELL_ROW_HEIGHT,
   },
-  miniDayCellPlaceholder: {
-    width: DAY_CELL_SIZE + (DAY_CELL_VERTICAL_MARGIN * 2),
-    height: DAY_CELL_SIZE + (DAY_CELL_VERTICAL_MARGIN * 2),
-    margin: DAY_CELL_VERTICAL_MARGIN,
+  dayCellPlaceholder: {
+    width: DAY_CELL_SIZE,
+    height: DAY_CELL_SIZE,
+    marginVertical: DAY_CELL_VERTICAL_MARGIN,
   },
-  // --- Day Cell Styling (Adjusted for compactness) ---
-  dayCellWrapper: { // This style is no longer directly used by DayCell, but kept for potential future use or if other components rely on it.
-    width: DAY_CELL_SIZE + (DAY_CELL_VERTICAL_MARGIN * 2),
-    height: DAY_CELL_SIZE + (DAY_CELL_VERTICAL_MARGIN * 2),
-    margin: DAY_CELL_VERTICAL_MARGIN,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  // --- Day Cell Styling ---
   dayCircle: {
     width: DAY_CELL_SIZE,
     height: DAY_CELL_SIZE,
     borderRadius: DAY_CELL_SIZE / 2,
-    justifyContent: 'center',
-    alignItems: 'center',
-    margin: DAY_CELL_VERTICAL_MARGIN,
+    justifyContent: 'center', // CENTER VERTICALLY
+    alignItems: 'center', // CENTER HORIZONTALLY
   },
   dayText: {
-    fontSize: 8, // Slightly increased font size for better readability within the circle
+    fontSize: 9,
     color: colors.secondaryText,
   },
 });

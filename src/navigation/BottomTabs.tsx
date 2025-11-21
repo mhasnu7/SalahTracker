@@ -2,11 +2,11 @@ import React, { useContext } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { TrackerScreen } from '../screens/TrackerScreen';
 import { CalendarScreen } from '../screens/CalendarScreen';
-import SettingsScreen from '../screens/SettingsScreen';
-import { ThemesScreen } from '../screens/ThemesScreen'; // Import ThemesScreen
+import MenuScreen from '../screens/MenuScreen';
 import { ThemeContext } from '../theme/ThemeContext';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { RootTabParamList } from './types'; // Import RootTabParamList
+import { RootTabParamList } from './types';
+import QuranScreen from '../screens/QuranSurahList'; // Import the new QuranSurahListScreen
 
 const Tab = createBottomTabNavigator<RootTabParamList>();
 
@@ -29,14 +29,14 @@ export const BottomTabs = () => {
           shadowOffset: { width: 0, height: -4 },
           shadowOpacity: 0.4,
           shadowRadius: 8,
-          justifyContent: 'space-around', // Distribute items evenly
+          justifyContent: 'space-around',
         },
         tabBarLabelStyle: {
           fontSize: 12,
           paddingBottom: 2,
         },
         tabBarItemStyle: {
-          flex: 1, // Each item takes equal space
+          flex: 1,
         },
       }}
     >
@@ -58,6 +58,26 @@ export const BottomTabs = () => {
             <Icon name="calendar-outline" color={color} size={size + 2} />
           ),
           tabBarLabel: 'Calendar',
+        }}
+      />
+      <Tab.Screen
+        name="QuranScreen" // New tab for Quran
+        component={QuranScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="book-outline" color={color} size={size + 2} />
+          ),
+          tabBarLabel: 'Quran',
+        }}
+      />
+      <Tab.Screen
+        name="Menu"
+        component={MenuScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="menu-outline" color={color} size={size + 2} />
+          ),
+          tabBarLabel: 'Menu',
         }}
       />
     </Tab.Navigator>

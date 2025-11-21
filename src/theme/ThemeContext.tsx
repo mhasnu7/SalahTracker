@@ -1,11 +1,30 @@
 import React, { createContext, useState, useMemo } from 'react';
 import { lightColors, darkColors } from './colors';
 
-export const ThemeContext = createContext({
+// Define context shape based on line 4-9 of old file, ensuring all parts are defined
+interface ThemeContextType {
+  isDark: boolean;
+  colors: typeof darkColors | typeof lightColors;
+  toggleTheme: () => void;
+  setIsDark: (dark: boolean) => void;
+}
+
+// Extend the ColorScheme interface to include the new properties
+declare module './colors' {
+  export interface ColorScheme {
+    buttonBackground: string;
+    buttonText: string;
+    shadow: string;
+    primary: string;
+    textSecondary: string;
+  }
+}
+
+export const ThemeContext = createContext<ThemeContextType>({
   isDark: true,
   colors: darkColors,
   toggleTheme: () => {},
-  setIsDark: (dark: boolean) => {}, // Add setIsDark to the context
+  setIsDark: () => {},
 });
 
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
@@ -19,7 +38,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     isDark,
     colors: isDark ? darkColors : lightColors,
     toggleTheme,
-    setIsDark, // Expose setIsDark
+    setIsDark,
   }), [isDark]);
 
   return (
@@ -28,3 +47,5 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     </ThemeContext.Provider>
   );
 };
+
+export const useTheme = () => React.useContext(ThemeContext);

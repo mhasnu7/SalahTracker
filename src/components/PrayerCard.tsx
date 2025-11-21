@@ -1,8 +1,22 @@
 import React, { useContext } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { ThemeContext } from '../theme/ThemeContext';
 import { PrayerName } from '../storage/trackerStorage';
+
+// --- RESPONSIVE GRID CONFIGURATION ---
+const SCREEN_WIDTH = Dimensions.get('window').width;
+const GRID_COLS = 27;
+const GRID_ROWS = 7;
+const TOTAL_DOTS = GRID_COLS * GRID_ROWS; // 189 dots
+const CARD_PADDING_H = 12;
+const SAFETY_MARGIN = 2;
+
+// Card width calculation: screenWidth - (2 * marginHorizontal from parent) - (2 * cardPaddingH) - safety margin
+const OUTER_MARGIN_H = 12; // Matches marginHorizontal in card style below
+const AVAILABLE_WIDTH = SCREEN_WIDTH - (OUTER_MARGIN_H * 2) - (CARD_PADDING_H * 2) - SAFETY_MARGIN;
+const DOT_MARGIN = 2;
+const DOT_SIZE = Math.floor((AVAILABLE_WIDTH / GRID_COLS) - (DOT_MARGIN * 2));
 
 interface ThemeColors {
   background: string;
@@ -18,16 +32,26 @@ interface PrayerCardProps {
   prayerName: PrayerName;
   isCompletedToday: boolean;
   onToggle: (prayer: PrayerName) => void;
-  last196Days: boolean[];
+  historicalCompletionData: { date: string; completed: boolean }[];
 }
 
 export const PrayerCard: React.FC<PrayerCardProps> = ({
   prayerName,
   isCompletedToday,
   onToggle,
-  last196Days,
+  historicalCompletionData,
 }) => {
   const { colors } = useContext(ThemeContext);
+
+  // --- DATA MAPPING ---
+  const emptyGrid = Array(TOTAL_DOTS).fill(false);
+
+  const displayData = emptyGrid.map((_, index) => {
+    if (index < historicalCompletionData.length) {
+      return historicalCompletionData[index].completed;
+    }
+    return false;
+  });
 
   return (
     <View style={styles(colors).card}>
@@ -38,16 +62,29 @@ export const PrayerCard: React.FC<PrayerCardProps> = ({
           onPress={() => onToggle(prayerName)}
           activeOpacity={0.7}
         >
-          <Icon name="checkmark-circle" size={20} color={isCompletedToday ? colors.primaryAccent : colors.grey} />
+          <Icon
+            name="checkmark-circle"
+            size={28}
+            color={isCompletedToday ? colors.primaryAccent : colors.grey}
+          />
         </TouchableOpacity>
       </View>
-      <View style={styles(colors).dotGrid}>
-        {last196Days.map((completed, index) => (
+
+      <View style={styles(colors).gridContainer}>
+        {displayData.map((isFilled, index) => (
           <View
             key={index}
             style={[
               styles(colors).dot,
-              { backgroundColor: completed ? colors.primaryAccent : colors.cardBackground },
+              {
+                width: DOT_SIZE,
+                height: DOT_SIZE,
+                borderRadius: DOT_SIZE / 2,
+                margin: DOT_MARGIN,
+                backgroundColor: isFilled ? colors.primaryAccent : 'transparent',
+                borderColor: isFilled ? colors.primaryAccent : colors.grey,
+                opacity: isFilled ? 1 : 0.3,
+              },
             ]}
           />
         ))}
@@ -59,15 +96,17 @@ export const PrayerCard: React.FC<PrayerCardProps> = ({
 const styles = (colors: ThemeColors) => StyleSheet.create({
   card: {
     backgroundColor: colors.cardBackground,
-    borderRadius: 9,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    elevation: 3,
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: CARD_PADDING_H,
+    marginHorizontal: 12,
+    // Reduced spacing for tighter look
+    marginBottom: 10,
+    elevation: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.22,
-    shadowRadius: 2.22,
-    flex: 1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -76,25 +115,21 @@ const styles = (colors: ThemeColors) => StyleSheet.create({
     marginBottom: 12,
   },
   prayerName: {
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: colors.primaryAccent,
+    color: colors.white,
+    letterSpacing: 0.5,
   },
   checkmarkButton: {
-    padding: 5,
+    padding: 4,
   },
-  dotGrid: {
+  gridContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: 'flex-start',
+    width: (DOT_SIZE + (DOT_MARGIN * 2)) * GRID_COLS,
   },
   dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
     borderWidth: 1,
-    borderColor: colors.grey,
-    margin: 2,
   },
 });
