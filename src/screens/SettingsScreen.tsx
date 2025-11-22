@@ -30,28 +30,9 @@ const SettingsScreen = () => {
       </TouchableOpacity>
       <TouchableOpacity
         style={styles(colors).button}
-        onPress={() => navigation.navigate('Analytics')}
-      >
-        <Text style={styles(colors).buttonText}>Salah Analytics</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles(colors).button}
-        onPress={() => navigation.navigate('QazaIntro')}
-      >
-        <Text style={styles(colors).buttonText}>Qaza Namaz Tracker</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles(colors).button}
         onPress={() => navigation.navigate('ResetSalah')}
       >
         <Text style={styles(colors).buttonText}>Reset Salah Data</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles(colors).prayerTimingsButton}
-        onPress={() => navigation.navigate('PrayerTimings')}
-      >
-        <Ionicons name="time-outline" size={20} color="white" />
-        <Text style={styles(colors).prayerTimingsButtonText}>Prayer Timings</Text>
       </TouchableOpacity>
     </View>
   );

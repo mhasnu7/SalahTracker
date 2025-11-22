@@ -26,6 +26,7 @@ interface ThemeColors {
   secondaryText: string;
   white: string;
   grey: string;
+  parrotGreen: string;
 }
 
 interface PrayerCardProps {
@@ -117,7 +118,7 @@ const styles = (colors: ThemeColors) => StyleSheet.create({
   prayerName: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: colors.white,
+    color: colors.parrotGreen,
     letterSpacing: 0.5,
   },
   checkmarkButton: {

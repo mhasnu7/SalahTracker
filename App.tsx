@@ -1,29 +1,38 @@
 import 'react-native-reanimated';
 import 'react-native-gesture-handler';
 import React, { useContext } from 'react';
-import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
+import {
+  NavigationContainer,
+  DefaultTheme,
+  DarkTheme
+} from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { StyleSheet, View, StatusBar } from 'react-native';
-import { BottomTabs } from './src/navigation/BottomTabs'; // CHANGED TO NAMED IMPORT
+import { StatusBar, StyleSheet } from 'react-native';
+
+import { BottomTabs } from './src/navigation/BottomTabs';
 import { ThemeContext, ThemeProvider } from './src/theme/ThemeContext';
-import MenuScreen from './src/screens/MenuScreen'; // NEW: Imported redesigned Menu Screen
-import SettingsScreen from './src/screens/SettingsScreen'; // Re-imported legacy component for 'Settings' stack route
-import { ThemesScreen } from './src/screens/ThemesScreen'; // Re-imported legacy component for 'Themes' stack route
+
+import MenuScreen from './src/screens/MenuScreen';
+import SettingsScreen from './src/screens/SettingsScreen';
+import { ThemesScreen } from './src/screens/ThemesScreen';
 import ResetSalahScreen from './src/screens/ResetSalahScreen';
 import AnalyticsScreen from './src/screens/AnalyticsScreen';
 import QazaIntroScreen from './src/screens/QazaIntroScreen';
 import QazaTrackerScreen from './src/screens/QazaTrackerScreen';
 import PrayerTimingsScreen from './src/screens/PrayerTimingsScreen';
-import QuranSurahListScreen from './src/screens/QuranSurahList'; // Import QuranSurahListScreen
-import SurahDetailsScreen from './src/screens/SurahDetails'; // Import SurahDetailsScreen
-import AboutAppScreen from './src/screens/AboutAppScreen'; // Import AboutAppScreen
+import QuranSurahListScreen from './src/screens/QuranSurahList';
+import SurahDetailsScreen from './src/screens/SurahDetails';
+import AboutAppScreen from './src/screens/AboutAppScreen';
+
+import AnimatedSplash from './src/screens/AnimatedSplash';  // ⭐ NEW SPLASH SCREEN
+
 import { RootStackParamList, QuranStackParamList } from './src/navigation/types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const QuranStack = createNativeStackNavigator<QuranStackParamList>();
 
-// Nested stack navigator for Quran features
+// Quran nested navigator
 const QuranNavigator = () => {
   const { colors } = useContext(ThemeContext);
   return (
@@ -63,7 +72,7 @@ function AppContent() {
   const navigationTheme = {
     ...(isDark ? DarkTheme : DefaultTheme),
     colors: {
-      ... (isDark ? DarkTheme.colors : DefaultTheme.colors),
+      ...(isDark ? DarkTheme.colors : DefaultTheme.colors),
       primary: colors.primaryAccent,
       background: colors.background,
       card: colors.cardBackground,
@@ -75,24 +84,28 @@ function AppContent() {
 
   return (
     <SafeAreaProvider>
-      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
+      <StatusBar
+        barStyle={isDark ? 'light-content' : 'dark-content'}
+        backgroundColor={colors.background}
+      />
+
       <NavigationContainer theme={navigationTheme}>
         <Stack.Navigator screenOptions={{ headerShown: false }}>
+
+          {/* ⭐ SPLASH SCREEN COMES FIRST */}
+          <Stack.Screen
+            name="AnimatedSplash"
+            component={AnimatedSplash}
+          />
+
+          {/* MAIN APP SCREENS */}
           <Stack.Screen name="BottomTabs" component={BottomTabs} />
 
-          {/* New Menu Screen integrated into Stack Navigator */}
-          <Stack.Screen
-            name="Menu" 
-            component={MenuScreen}
-            options={{
-              headerShown: false, // Menu screen handles its own header via styles.ts
-            }}
-          />
-          
-          {/* Stack Screens for items linked from MenuScreen */}
+          <Stack.Screen name="Menu" component={MenuScreen} />
+
           <Stack.Screen
             name="Settings"
-            component={SettingsScreen} 
+            component={SettingsScreen}
             options={{
               headerShown: true,
               headerTitle: 'Settings',
@@ -101,7 +114,7 @@ function AppContent() {
               headerTintColor: colors.headerTitle,
             }}
           />
-          
+
           <Stack.Screen
             name="Themes"
             component={ThemesScreen}
@@ -113,6 +126,7 @@ function AppContent() {
               headerTintColor: colors.headerTitle,
             }}
           />
+
           <Stack.Screen
             name="ResetSalah"
             component={ResetSalahScreen}
@@ -124,6 +138,7 @@ function AppContent() {
               headerTintColor: colors.headerTitle,
             }}
           />
+
           <Stack.Screen
             name="Analytics"
             component={AnalyticsScreen}
@@ -135,6 +150,7 @@ function AppContent() {
               headerTintColor: colors.headerTitle,
             }}
           />
+
           <Stack.Screen
             name="QazaIntro"
             component={QazaIntroScreen}
@@ -146,6 +162,7 @@ function AppContent() {
               headerTintColor: colors.headerTitle,
             }}
           />
+
           <Stack.Screen
             name="QazaTracker"
             component={QazaTrackerScreen}
@@ -157,6 +174,7 @@ function AppContent() {
               headerTintColor: colors.headerTitle,
             }}
           />
+
           <Stack.Screen
             name="PrayerTimings"
             component={PrayerTimingsScreen}
@@ -168,12 +186,13 @@ function AppContent() {
               headerTintColor: colors.headerTitle,
             }}
           />
-          {/* New Quran Feature Stack Navigator */}
+
           <Stack.Screen
             name="Quran"
             component={QuranNavigator}
-            options={{ headerShown: false }} // QuranNavigator will handle its own header
+            options={{ headerShown: false }}
           />
+
           <Stack.Screen
             name="SurahDetails"
             component={SurahDetailsScreen}
@@ -185,6 +204,7 @@ function AppContent() {
               headerTintColor: colors.headerTitle,
             })}
           />
+
           <Stack.Screen
             name="AboutApp"
             component={AboutAppScreen}

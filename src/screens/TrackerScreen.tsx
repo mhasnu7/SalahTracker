@@ -119,7 +119,7 @@ export const TrackerScreen: React.FC = () => {
             }
           }}
         >
-          <Icon name="menu-outline" size={24} color={colors.headerTitle} />
+          <Icon name="menu-outline" size={24} color={colors.headingBlue} />
         </TouchableOpacity>
         {/* === END MENU BUTTON LOGIC === */}
 
@@ -128,12 +128,12 @@ export const TrackerScreen: React.FC = () => {
 
           {/* Qaza Tracker Navigation */}
           <TouchableOpacity style={[styles(colors).iconButton, { marginRight: 5 }]} onPress={() => navigation.getParent()?.navigate('QazaTracker')}>
-            <Text style={{ color: colors.headerTitle, fontSize: 20, fontWeight: 'bold' }}>Q</Text>
+            <Text style={{ color: colors.headingBlue, fontSize: 20, fontWeight: 'bold' }}>Q</Text>
           </TouchableOpacity>
 
           {/* Analytics Navigation */}
           <TouchableOpacity style={styles(colors).iconButton} onPress={() => navigation.getParent()?.navigate('Analytics')}>
-            <Icon name="analytics-outline" size={24} color={colors.headerTitle} />
+            <Icon name="analytics-outline" size={24} color={colors.headingBlue} />
           </TouchableOpacity>
         </View>
       </View>

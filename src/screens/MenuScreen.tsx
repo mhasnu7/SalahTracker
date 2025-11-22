@@ -103,17 +103,6 @@ const menuItems = [
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      {/* Home Button at the bottom, centrally placed */}
-      <Animated.View
-        entering={SlideInUp.delay(menuItems.length * 100 + 100).duration(400)}
-        style={styles.bottomHomeButtonContainer}
-      >
-        <MenuCard
-          title="Home"
-          iconName="home-outline"
-          onPress={() => handlePress("Tracker")}
-        />
-      </Animated.View>
     </View>
   );
 };

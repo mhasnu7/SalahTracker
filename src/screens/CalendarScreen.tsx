@@ -56,6 +56,7 @@ interface ThemeColors {
   secondaryText: string;
   white: string;
   grey: string;
+  parrotGreen: string;
 }
 
 interface DayCellProps {
@@ -277,7 +278,7 @@ export const CalendarScreen: React.FC = () => {
     <SafeAreaView style={styles(colors).safeArea}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
       <View style={styles(colors).header}>
-        <Text style={styles(colors).headerTitle}>Calendar View</Text>
+        <Text style={[styles(colors).headerTitle, { color: colors.headingBlue }]}>Calendar View</Text>
       </View>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <ScrollView style={styles(colors).container} contentContainerStyle={styles(colors).contentContainer}>
@@ -404,7 +405,7 @@ const styles = (colors: ThemeColors) => StyleSheet.create({
   prayerNameText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: colors.primaryAccent,
+    color: colors.parrotGreen,
   },
   markAllCompleteButton: {
     padding: 5,
