@@ -1,6 +1,6 @@
 import 'react-native-reanimated';
 import 'react-native-gesture-handler';
-import React, { useContext } from 'react';
+import React, { useContext, useEffect } from 'react';
 import {
   NavigationContainer,
   DefaultTheme,
@@ -24,10 +24,15 @@ import PrayerTimingsScreen from './src/screens/PrayerTimingsScreen';
 import QuranSurahListScreen from './src/screens/QuranSurahList';
 import SurahDetailsScreen from './src/screens/SurahDetails';
 import AboutAppScreen from './src/screens/AboutAppScreen';
+import PrivacyPolicyScreen from './src/screens/PrivacyPolicyScreen';
+import NotificationsScreen from './src/screens/NotificationsScreen';
 
-import AnimatedSplash from './src/screens/AnimatedSplash';  // ⭐ NEW SPLASH SCREEN
+import AnimatedSplash from './src/screens/AnimatedSplash';
 
 import { RootStackParamList, QuranStackParamList } from './src/navigation/types';
+
+// ⭐ NEW: Import Notifee channel setup
+import { createChannel } from './src/utils/notificationManager';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const QuranStack = createNativeStackNavigator<QuranStackParamList>();
@@ -69,6 +74,11 @@ function App() {
 function AppContent() {
   const { isDark, colors } = useContext(ThemeContext);
 
+  // ⭐ Initialize Notifee Notification Channel
+  useEffect(() => {
+    createChannel();
+  }, []);
+
   const navigationTheme = {
     ...(isDark ? DarkTheme : DefaultTheme),
     colors: {
@@ -92,13 +102,10 @@ function AppContent() {
       <NavigationContainer theme={navigationTheme}>
         <Stack.Navigator screenOptions={{ headerShown: false }}>
 
-          {/* ⭐ SPLASH SCREEN COMES FIRST */}
-          <Stack.Screen
-            name="AnimatedSplash"
-            component={AnimatedSplash}
-          />
+          {/* ⭐ SPLASH SCREEN FIRST */}
+          <Stack.Screen name="AnimatedSplash" component={AnimatedSplash} />
 
-          {/* MAIN APP SCREENS */}
+          {/* MAIN APP */}
           <Stack.Screen name="BottomTabs" component={BottomTabs} />
 
           <Stack.Screen name="Menu" component={MenuScreen} />
@@ -216,6 +223,31 @@ function AppContent() {
               headerTintColor: colors.headerTitle,
             }}
           />
+
+          <Stack.Screen
+            name="PrivacyPolicy"
+            component={PrivacyPolicyScreen}
+            options={{
+              headerShown: true,
+              headerTitle: 'Privacy Policy',
+              headerTitleAlign: 'center',
+              headerStyle: { backgroundColor: colors.background },
+              headerTintColor: colors.headerTitle,
+            }}
+          />
+
+          <Stack.Screen
+            name="Notifications"
+            component={NotificationsScreen}
+            options={{
+              headerShown: true,
+              headerTitle: 'Notifications',
+              headerTitleAlign: 'center',
+              headerStyle: { backgroundColor: colors.background },
+              headerTintColor: colors.headerTitle,
+            }}
+          />
+
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>

@@ -14,6 +14,7 @@ export type QuranStackParamList = {
 };
 
 export type RootStackParamList = {
+  AnimatedSplash: undefined; // Add AnimatedSplash to RootStackParamList
   BottomTabs: NavigatorScreenParams<RootTabParamList>;
   Menu: undefined;
   Quran: NavigatorScreenParams<QuranStackParamList>;
@@ -27,6 +28,8 @@ export type RootStackParamList = {
   QazaTracker: undefined;
   PrayerTimings: undefined;
   QuranScreen: undefined; // Adding the new QuranScreen to RootStackParamList
+  PrivacyPolicy: undefined; // Add PrivacyPolicy to RootStackParamList
+  Notifications: undefined; // Add Notifications to RootStackParamList
 };
 
 export type RootTabScreenProps<Screen extends keyof RootTabParamList> = BottomTabScreenProps<

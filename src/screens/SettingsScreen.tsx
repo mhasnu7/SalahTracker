@@ -34,6 +34,12 @@ const SettingsScreen = () => {
       >
         <Text style={styles(colors).buttonText}>Reset Salah Data</Text>
       </TouchableOpacity>
+      <TouchableOpacity
+        style={styles(colors).button}
+        onPress={() => navigation.navigate('Notifications')} // Navigate to NotificationsScreen
+      >
+        <Text style={styles(colors).buttonText}>Notifications</Text>
+      </TouchableOpacity>
     </View>
   );
 };

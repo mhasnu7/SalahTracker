@@ -33,13 +33,6 @@ export const menuStyles = (isDark: boolean) => {
       flexWrap: 'wrap',
       paddingHorizontal: 5,
     },
-    bottomHomeButtonContainer: {
-      position: 'absolute',
-      bottom: 20, // Adjust as needed for spacing from the bottom
-      alignSelf: 'center', // Center horizontally
-      width: '45%', // Adjust width to match other cards or desired size
-      aspectRatio: 1, // Keep aspect ratio for square cards
-    },
     // Note: Individual card styling (shadow/border/animation) is handled in MenuCard.tsx
   });
 };

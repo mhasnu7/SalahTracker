@@ -58,6 +58,11 @@ const menuItems = [
       iconName: "information-outline",
       destination: "AboutApp" // Stack Route for AboutAppScreen
     },
+    {
+      title: "Privacy Policy",
+      iconName: "shield-lock-outline", // A suitable icon for privacy policy
+      destination: "PrivacyPolicy" // The new route name
+    },
   ];
 
   const handlePress = (destination: string) => {
@@ -71,7 +76,10 @@ const menuItems = [
       // Need to handle navigation to a new stack if it's a nested navigator
       if (destination === "Quran") {
         navigation.navigate("Quran", { screen: "QuranSurahList" });
-      } else {
+      } else if (destination === "PrivacyPolicy") {
+        navigation.navigate("PrivacyPolicy" as never);
+      }
+      else {
         navigation.navigate(destination as never);
       }
     }
@@ -84,24 +92,24 @@ const menuItems = [
         <Text style={styles.subtitle}>Explore powerful features</Text>
       </View>
       
-      <ScrollView contentContainerStyle={[styles.cardGrid, { flexGrow: 1 }]} bounces={false}>
-        {menuItems.map((item, index) => (
-          <View key={item.title} style={{ flexBasis: '50%' }}>
-            <Animated.View
-              // Stagger fade-in and upward motion
-              entering={SlideInUp.delay(index * 100 + 100).duration(400)}
-            >
-              <MenuCard
-                title={item.title}
-                iconName={item.iconName}
-                onPress={() => handlePress(item.destination)}
-              />
-            </Animated.View>
-          </View>
-        ))}
-        {/* Spacer to push content up if needed and allow scroll */}
-        <View style={{ height: 100 }} />
-      </ScrollView>
+     <ScrollView contentContainerStyle={[styles.cardGrid, { flexGrow: 1 }]} bounces={false}>
+       {menuItems.map((item, index) => (
+         <View key={item.title} style={{ flexBasis: '50%' }}>
+           <Animated.View
+             // Stagger fade-in and upward motion
+             entering={SlideInUp.delay(index * 100 + 100).duration(400)}
+           >
+             <MenuCard
+               title={item.title}
+               iconName={item.iconName}
+               onPress={() => handlePress(item.destination)}
+             />
+           </Animated.View>
+         </View>
+       ))}
+       {/* Spacer to push content up if needed and allow scroll */}
+       <View style={{ height: 100 }} />
+     </ScrollView>
 
     </View>
   );
