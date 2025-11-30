@@ -6,6 +6,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { ThemeContext } from '../theme/ThemeContext';
+import { runOnJS } from 'react-native-reanimated';   // <-- REQUIRED IMPORT FIX
+
 import { loadSalahTrackerData, SalahTrackerData, PrayerName, getTodayDate, saveSalahTrackerData } from '../storage/trackerStorage';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -25,16 +27,11 @@ const AVAILABLE_HEIGHT_FOR_CARDS_AREA = screenHeight - STATUS_BAR_HEIGHT - HEADE
 const TOTAL_VERTICAL_SPACE_PER_CARD_EXCEPT_GRID = PRAYER_NAME_HEIGHT + (CARD_INNER_PADDING * 2) + CARD_MARGIN_VERTICAL;
 const HEIGHT_PER_CARD_FOR_GRID = (AVAILABLE_HEIGHT_FOR_CARDS_AREA / PRAYER_NAMES.length) - TOTAL_VERTICAL_SPACE_PER_CARD_EXCEPT_GRID;
 
-const NUM_WEEKDAY_ROWS = 7; // Su through Sa
-const DAY_CELL_VERTICAL_MARGIN = 0.05; // Reduced vertical margin for compactness
+const NUM_WEEKDAY_ROWS = 7;
+const DAY_CELL_VERTICAL_MARGIN = 0.05;
 
-// 1. Height of the cell itself (circle)
 const DAY_CELL_BASE_HEIGHT = Math.floor(HEIGHT_PER_CARD_FOR_GRID / NUM_WEEKDAY_ROWS);
-
-// 2. Total required height for one row (Cell + 2*Margin)
 const DAY_CELL_ROW_HEIGHT = DAY_CELL_BASE_HEIGHT;
-
-// Re-calculate DAY_CELL_SIZE to use the base height, ensuring it fits vertically
 const DAY_CELL_HEIGHT = DAY_CELL_BASE_HEIGHT - (DAY_CELL_VERTICAL_MARGIN * 2);
 
 const WEEKDAY_COLUMN_WIDTH = 20;
@@ -82,7 +79,7 @@ const DayCell: React.FC<DayCellProps> = ({ date, isCompleted, onToggle, prayerNa
           backgroundColor: isCompleted ? colors.primaryAccent : colors.cardBackground,
           borderColor: isCurrentDay ? colors.primaryAccent : colors.cardBackground,
           borderWidth: isCurrentDay ? 1 : 0,
-          marginVertical: DAY_CELL_VERTICAL_MARGIN, // Vertical padding for date cells
+          marginVertical: DAY_CELL_VERTICAL_MARGIN,
         },
       ]}
       onPress={() => !isFutureDate && onToggle(prayerName, date)}
@@ -118,55 +115,50 @@ const MonthGrid: React.FC<MonthGridProps> = ({ monthData, onToggle, prayerName }
     <View style={styles(colors).monthGridContainer}>
       <Text style={styles(colors).monthGridTitle}>{monthTitle}</Text>
       <View style={styles(colors).calendarGrid}>
-        {Array.from({ length: 7 }).map((_, dayOfWeekIndex) => { // 7 rows for days of the week (Su, Mo, etc.)
-          return (
-            <View key={`${prayerName}-${monthTitle}-${dayOfWeekIndex}`} style={styles(colors).calendarRow}>
-              {Array.from({ length: 5 }).map((_, weekIndex) => { // 5 columns for weeks
-                const firstDayOfMonth = new Date(monthData[0].year, new Date(monthData[0].date).getMonth(), 1).getDay();
-                const dayOfMonth = (weekIndex * 7) + dayOfWeekIndex - firstDayOfMonth + 1;
+        {Array.from({ length: 7 }).map((_, dayOfWeekIndex) => (
+          <View key={`${prayerName}-${monthTitle}-${dayOfWeekIndex}`} style={styles(colors).calendarRow}>
+            {Array.from({ length: 5 }).map((_, weekIndex) => {
+              const firstDayOfMonth = new Date(monthData[0].year, new Date(monthData[0].date).getMonth(), 1).getDay();
+              const dayOfMonth = (weekIndex * 7) + dayOfWeekIndex - firstDayOfMonth + 1;
 
-                let item = null;
-                if (dayOfMonth > 0 && dayOfMonth <= new Date(monthData[0].year, new Date(monthData[0].date).getMonth() + 1, 0).getDate()) {
-                  const date = new Date(monthData[0].year, new Date(monthData[0].date).getMonth(), dayOfMonth);
-                  const formattedDate = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
-                  item = monthData.find(d => d.date === formattedDate);
-                }
+              let item = null;
+              if (dayOfMonth > 0 && dayOfMonth <= new Date(monthData[0].year, new Date(monthData[0].date).getMonth() + 1, 0).getDate()) {
+                const date = new Date(monthData[0].year, new Date(monthData[0].date).getMonth(), dayOfMonth);
+                const formattedDate = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+                item = monthData.find(d => d.date === formattedDate);
+              }
 
-                if (!item) {
-                  return <View key={`empty-${dayOfWeekIndex}-${weekIndex}`} style={styles(colors).dayCellPlaceholder} />;
-                }
-                return (
-                  <DayCell
-                    key={item.date}
-                    date={item.date}
-                    isCompleted={item.isCompleted}
-                    onToggle={onToggle}
-                    prayerName={prayerName}
-                  />
-                );
-              })}
-            </View>
-          );
-        })}
+              if (!item) {
+                return <View key={`empty-${dayOfWeekIndex}-${weekIndex}`} style={styles(colors).dayCellPlaceholder} />;
+              }
+              return (
+                <DayCell
+                  key={item.date}
+                  date={item.date}
+                  isCompleted={item.isCompleted}
+                  onToggle={onToggle}
+                  prayerName={prayerName}
+                />
+              );
+            })}
+          </View>
+        ))}
       </View>
     </View>
   );
 };
 
-// --- Weekday Label Component Refactor for Alignment ---
 interface WeekdayLabelProps {
   day: string;
   colors: ThemeColors;
 }
 
 const WeekdayLabel: React.FC<WeekdayLabelProps> = ({ day, colors }) => (
-    <View style={styles(colors).weekdayContainer}>
-      <Text style={styles(colors).weekdayText}>
-        {day}
-      </Text>
-    </View>
+  <View style={styles(colors).weekdayContainer}>
+    <Text style={styles(colors).weekdayText}>{day}</Text>
+  </View>
 );
-// --- Main Screen Component ---
+
 
 export const CalendarScreen: React.FC = () => {
   const { colors, isDark } = useContext(ThemeContext);
@@ -195,7 +187,6 @@ export const CalendarScreen: React.FC = () => {
         const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
         const monthDays: { date: string; isCompleted: boolean; monthName: string; year: number }[] = [];
 
-        // Add actual days of the month
         for (let day = 1; day <= daysInMonth; day++) {
           const date = new Date(year, monthIndex, day);
           const formattedDate = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
@@ -248,14 +239,10 @@ export const CalendarScreen: React.FC = () => {
         updatedData[prayerName] = {};
       }
       updatedData[prayerName][todayStr] = !updatedData[prayerName]?.[todayStr];
-      const changed = true;
 
-
-      if (changed) {
-        setSalahData(updatedData);
-        await saveSalahTrackerData(updatedData);
-        generatePrayerQuarters(updatedData);
-      }
+      setSalahData(updatedData);
+      await saveSalahTrackerData(updatedData);
+      generatePrayerQuarters(updatedData);
     },
     [salahData, generatePrayerQuarters]
   );
@@ -274,6 +261,7 @@ export const CalendarScreen: React.FC = () => {
 
   const weekDays = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
+
   return (
     <SafeAreaView style={styles(colors).safeArea}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
@@ -289,17 +277,21 @@ export const CalendarScreen: React.FC = () => {
                 currentQuarterStartMonth + 3
               );
 
+              // --- FIXED GESTURES WITH runOnJS ---
               const fling = Gesture.Fling()
                 .direction(Directions.LEFT)
                 .onEnd(() => {
-                  handleNextQuarter();
+                  'worklet';
+                  runOnJS(handleNextQuarter)();
                 });
 
               const flingRight = Gesture.Fling()
                 .direction(Directions.RIGHT)
                 .onEnd(() => {
-                  handlePreviousQuarter();
+                  'worklet';
+                  runOnJS(handlePreviousQuarter)();
                 });
+              // ------------------------------------
 
               return (
                 <GestureDetector key={prayerQuarter.prayerName} gesture={Gesture.Race(fling, flingRight)}>
@@ -317,7 +309,6 @@ export const CalendarScreen: React.FC = () => {
                     <View style={styles(colors).quarterViewWrapper}>
                       <View style={styles(colors).weekdaysColumn}>
                         {weekDays.map((day) => (
-                          // Use the new WeekdayLabel component for improved alignment
                           <WeekdayLabel key={day} day={day} colors={colors} />
                         ))}
                       </View>
@@ -345,6 +336,7 @@ export const CalendarScreen: React.FC = () => {
     </SafeAreaView>
   );
 };
+
 
 // --- Styles ---
 
@@ -420,7 +412,6 @@ const styles = (colors: ThemeColors) => StyleSheet.create({
     marginRight: 4,
     paddingTop: 0,
   },
-  // Weekday container style adjustment
   weekdayContainer: {
     height: DAY_CELL_ROW_HEIGHT,
     width: WEEKDAY_COLUMN_WIDTH,
@@ -437,7 +428,6 @@ const styles = (colors: ThemeColors) => StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     flex: 1,
-    // This is the line that pushes the calendar grid up to align with the weekdays
     marginTop: -12,
   },
   monthContainer: {
@@ -469,16 +459,17 @@ const styles = (colors: ThemeColors) => StyleSheet.create({
     height: DAY_CELL_SIZE,
     marginVertical: DAY_CELL_VERTICAL_MARGIN,
   },
-  // --- Day Cell Styling ---
   dayCircle: {
     width: DAY_CELL_SIZE,
     height: DAY_CELL_SIZE,
     borderRadius: DAY_CELL_SIZE / 2,
-    justifyContent: 'center', // CENTER VERTICALLY
-    alignItems: 'center', // CENTER HORIZONTALLY
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   dayText: {
     fontSize: 9,
     color: colors.secondaryText,
   },
 });
+
+export default CalendarScreen;

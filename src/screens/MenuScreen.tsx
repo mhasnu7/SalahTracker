@@ -1,88 +1,92 @@
 import React from 'react';
 import { View, ScrollView, StyleSheet, Text } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import Animated, { SlideInUp } from 'react-native-reanimated';
+import Animated, { SlideInUp, ZoomIn } from 'react-native-reanimated';
 
 import MenuCard from '../components/MenuCard';
 import { useTheme } from '../theme/ThemeContext';
 import { menuStyles } from '../styles/menuStyles';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
-// Assuming navigation prop to be used for Stack navigation actions
-import { MenuScreenNavigationProp, QuranSurahListScreenNavigationProp } from '../navigation/types';
+import {
+  MenuScreenNavigationProp,
+  QuranSurahListScreenNavigationProp,
+} from '../navigation/types';
 
 const MenuScreen = () => {
   const { colors, isDark } = useTheme();
-  const navigation = useNavigation<MenuScreenNavigationProp | QuranSurahListScreenNavigationProp>(); // Updated to allow navigation to Quran stack
+  const navigation =
+    useNavigation<MenuScreenNavigationProp | QuranSurahListScreenNavigationProp>();
   const styles = menuStyles(isDark);
 
-  // Define Menu Items structure using routes defined in RootStackParamList where applicable
-const menuItems = [
+  // ⭐ Regular menu items
+  const menuItems = [
     {
-      title: "Prayer Tracker",
-      iconName: "clock-check-outline",
-      destination: "Tracker" // Existing Tab Route
+      title: 'Prayer Tracker',
+      iconName: 'clock-check-outline',
+      destination: 'Tracker',
     },
     {
-      title: "Calendar View",
-      iconName: "calendar-month-outline",
-      destination: "Calendar" // Existing Tab Route
+      title: 'Calendar View',
+      iconName: 'calendar-month-outline',
+      destination: 'Calendar',
     },
     {
-      title: "Qaza Tracker",
-      iconName: "alert-decagram-outline",
-      destination: "QazaTracker" // Stack Route
+      title: 'Qaza Tracker',
+      iconName: 'alert-decagram-outline',
+      destination: 'QazaTracker',
     },
     {
-      title: "Prayer Timings",
-      iconName: "weather-sunset-up",
-      destination: "PrayerTimings" // Stack Route
+      title: 'Prayer Timings',
+      iconName: 'weather-sunset-up',
+      destination: 'PrayerTimings',
     },
     {
-      title: "Quran",
-      iconName: "book-open-variant", // Using a relevant icon from MaterialCommunityIcons
-      destination: "Quran" // New Stack Navigator Route
+      title: 'Quran',
+      iconName: 'book-open-variant',
+      destination: 'Quran',
     },
     {
-      title: "Analytics & Insights",
-      iconName: "chart-line",
-      destination: "Analytics" // Stack Route
+      title: 'Analytics & Insights',
+      iconName: 'chart-line',
+      destination: 'Analytics',
     },
     {
-      title: "Settings",
-      iconName: "cog-outline",
-      destination: "Settings" // Stack Route defined in types.ts
+      title: 'Settings',
+      iconName: 'cog-outline',
+      destination: 'Settings',
     },
     {
-      title: "About App",
-      iconName: "information-outline",
-      destination: "AboutApp" // Stack Route for AboutAppScreen
+      title: 'About App',
+      iconName: 'information-outline',
+      destination: 'AboutApp',
     },
     {
-      title: "Privacy Policy",
-      iconName: "shield-lock-outline", // A suitable icon for privacy policy
-      destination: "PrivacyPolicy" // The new route name
+      title: 'Privacy Policy',
+      iconName: 'shield-lock-outline',
+      destination: 'PrivacyPolicy',
     },
   ];
 
+  // ⭐ Special Donation Tile (separate so we style it differently)
+  const donationTile = {
+    title: 'Buy Me a Coffee ❤️',
+    iconName: 'heart-circle-outline',
+    destination: 'SupportUs',
+  };
+
   const handlePress = (destination: string) => {
-    // NOTE: Actual navigation requires all destination routes to be registered in the main navigators (Stack/Tabs).
-    // For this UI redesign, we mock console log, but in production, this would navigate.
-    console.log(`Navigating to: ${destination}`);
-    if (destination === "Tracker" || destination === "Calendar") {
-      navigation.navigate("BottomTabs", { screen: destination });
-    } else {
-      // For other stack navigators like 'Quran', 'Settings', etc.
-      // Need to handle navigation to a new stack if it's a nested navigator
-      if (destination === "Quran") {
-        navigation.navigate("Quran", { screen: "QuranSurahList" });
-      } else if (destination === "PrivacyPolicy") {
-        navigation.navigate("PrivacyPolicy" as never);
-      }
-      else {
-        navigation.navigate(destination as never);
-      }
+    if (destination === 'Tracker' || destination === 'Calendar') {
+      navigation.navigate('BottomTabs', { screen: destination });
+      return;
     }
+
+    if (destination === 'Quran') {
+      navigation.navigate('Quran', { screen: 'QuranSurahList' });
+      return;
+    }
+
+    navigation.navigate(destination as never);
   };
 
   return (
@@ -91,26 +95,54 @@ const menuItems = [
         <Text style={styles.title}>Menu</Text>
         <Text style={styles.subtitle}>Explore powerful features</Text>
       </View>
-      
-     <ScrollView contentContainerStyle={[styles.cardGrid, { flexGrow: 1 }]} bounces={false}>
-       {menuItems.map((item, index) => (
-         <View key={item.title} style={{ flexBasis: '50%' }}>
-           <Animated.View
-             // Stagger fade-in and upward motion
-             entering={SlideInUp.delay(index * 100 + 100).duration(400)}
-           >
-             <MenuCard
-               title={item.title}
-               iconName={item.iconName}
-               onPress={() => handlePress(item.destination)}
-             />
-           </Animated.View>
-         </View>
-       ))}
-       {/* Spacer to push content up if needed and allow scroll */}
-       <View style={{ height: 100 }} />
-     </ScrollView>
 
+      <ScrollView
+        contentContainerStyle={[styles.cardGrid, { flexGrow: 1 }]}
+        bounces={false}
+      >
+        {/* Render all regular menu cards */}
+        {menuItems.map((item, index) => (
+          <View key={item.title} style={{ flexBasis: '50%' }}>
+            <Animated.View
+              entering={SlideInUp.delay(index * 100 + 100).duration(400)}
+            >
+              <MenuCard
+                title={item.title}
+                iconName={item.iconName}
+                onPress={() => handlePress(item.destination)}
+              />
+            </Animated.View>
+          </View>
+        ))}
+
+        {/* ⭐ Special Donation Card — visually enhanced */}
+        <View key="donation" style={{ flexBasis: '50%' }}>
+          <Animated.View
+            entering={ZoomIn.duration(500)} // Slight zoom animation for emphasis
+            style={{
+              borderWidth: 2,
+              borderColor: '#D4AF37', // Gold outline
+              borderRadius: 16,
+              overflow: 'hidden',
+              shadowColor: '#D4AF37',
+              shadowOpacity: 0.5,
+              shadowOffset: { width: 0, height: 4 },
+              shadowRadius: 10,
+              elevation: 6,
+            }}
+          >
+            <MenuCard
+              title={donationTile.title}
+              iconName={donationTile.iconName}
+              onPress={() => handlePress(donationTile.destination)}
+              customBackground="gold" // Custom prop if your MenuCard supports it
+            />
+          </Animated.View>
+        </View>
+
+        {/* Spacer */}
+        <View style={{ height: 100 }} />
+      </ScrollView>
     </View>
   );
 };

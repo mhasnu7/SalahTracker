@@ -26,6 +26,7 @@ import SurahDetailsScreen from './src/screens/SurahDetails';
 import AboutAppScreen from './src/screens/AboutAppScreen';
 import PrivacyPolicyScreen from './src/screens/PrivacyPolicyScreen';
 import NotificationsScreen from './src/screens/NotificationsScreen';
+import SupportUsScreen from './src/screens/SupportUsScreen';   // ⭐ NEW SUPPORT PAGE
 
 import AnimatedSplash from './src/screens/AnimatedSplash';
 
@@ -242,6 +243,19 @@ function AppContent() {
             options={{
               headerShown: true,
               headerTitle: 'Notifications',
+              headerTitleAlign: 'center',
+              headerStyle: { backgroundColor: colors.background },
+              headerTintColor: colors.headerTitle,
+            }}
+          />
+
+          {/* ⭐ SUPPORT US PAGE */}
+          <Stack.Screen
+            name="SupportUs"
+            component={SupportUsScreen}
+            options={{
+              headerShown: true,
+              headerTitle: 'Support Us',
               headerTitleAlign: 'center',
               headerStyle: { backgroundColor: colors.background },
               headerTintColor: colors.headerTitle,
