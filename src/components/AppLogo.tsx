@@ -6,9 +6,8 @@ import {
   StyleSheet,
   ScrollView,
   StatusBar,
-  Dimensions,
   TouchableOpacity,
-  Image
+  Dimensions,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { RootTabScreenProps } from '../navigation/types';
@@ -25,18 +24,15 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemeContext } from '../theme/ThemeContext';
 
-// ⭐ Import your new PNG logo
-import SalahHeaderLogo from '../assets/salah_header.png';
-
 const PRAYER_NAMES: PrayerName[] = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
 
-const HEADER_HEIGHT = 60;
+const HEADER_HEIGHT = 50;
 const CARD_HORIZONTAL_PADDING = 4;
 const GRID_DOTS_COUNT = 189;
 
 export const TrackerScreen: React.FC = () => {
-  const { colors, isDark } = useContext(ThemeContext);
   const navigation = useNavigation<RootTabScreenProps<'Tracker'>['navigation']>();
+  const { colors, isDark } = useContext(ThemeContext);
 
   const [salahData, setSalahData] = useState<SalahTrackerData | null>(null);
 
@@ -70,33 +66,31 @@ export const TrackerScreen: React.FC = () => {
     [salahData]
   );
 
-  const getHistoricalCompletionData = (
-    prayer: PrayerName,
-    numberOfDays: number = GRID_DOTS_COUNT
-  ) => {
+  const getHistoricalCompletionData = (prayer: PrayerName, numberOfDays: number) => {
     if (!salahData || !salahData[prayer]) {
       return Array(numberOfDays).fill({ date: '', completed: false });
     }
 
-    const historicalData: { date: string; completed: boolean }[] = [];
+    const results: { date: string; completed: boolean }[] = [];
     const today = new Date();
 
     for (let i = numberOfDays - 1; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(today.getDate() - i);
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
 
-      const year = date.getFullYear();
-      const month = (date.getMonth() + 1).toString().padStart(2, '0');
-      const day = date.getDate().toString().padStart(2, '0');
-      const formattedDate = `${year}-${month}-${day}`;
+      const yyyy = d.getFullYear();
+      const mm = (d.getMonth() + 1).toString().padStart(2, '0');
+      const dd = d.getDate().toString().padStart(2, '0');
 
-      historicalData.push({
-        date: formattedDate,
-        completed: salahData[prayer][formattedDate] || false,
+      const key = `${yyyy}-${mm}-${dd}`;
+
+      results.push({
+        date: key,
+        completed: salahData[prayer][key] || false,
       });
     }
 
-    return historicalData;
+    return results;
   };
 
   return (
@@ -106,90 +100,77 @@ export const TrackerScreen: React.FC = () => {
         backgroundColor={colors.background}
       />
 
-      {/* HEADER */}
+      {/* ---------------- HEADER ---------------- */}
       <View style={styles(colors).header}>
 
-        {/* LEFT MENU */}
+        {/* LEFT MENU BUTTON */}
         <TouchableOpacity
           style={styles(colors).iconButton}
           onPress={() => {
-            if (
-              navigation.getParent() &&
-              'toggleDrawer' in navigation.getParent()
-            ) {
+            if (navigation.getParent() && 'toggleDrawer' in navigation.getParent()) {
               (navigation.getParent() as any).toggleDrawer();
             } else {
               navigation.getParent()?.navigate('Menu');
             }
           }}>
-          <Icon name="menu-outline" size={26} color={colors.headingBlue} />
+          <Icon name="menu-outline" size={28} color={colors.headingBlue} />
         </TouchableOpacity>
 
-        {/* ⭐ IMAGE LOGO IN CENTER */}
-        <View style={styles(colors).logoContainer}>
-          <Image
-            source={SalahHeaderLogo}
-            style={{
-              width: 135,    // Adjust size here
-              height: 99,    // Adjust height here
-              resizeMode: 'contain'
-            }}
+        {/* ⭐ CENTER TITLE: Salah ✓ */}
+        <View style={styles(colors).headerCenter}>
+          <Text style={styles(colors).headerTitle}>Salah</Text>
+          <Icon
+            name="checkmark-circle"
+            size={30}
+            color={colors.primaryAccent}
+            style={{ marginLeft: 6, marginTop: 3 }}
           />
         </View>
 
-        {/* RIGHT ICONS */}
+        {/* RIGHT BUTTONS */}
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          {/* Qaza */}
           <TouchableOpacity
             style={[styles(colors).iconButton, { marginRight: 5 }]}
             onPress={() => navigation.getParent()?.navigate('QazaTracker')}>
-            <Text
-              style={{
-                color: colors.headingBlue,
-                fontSize: 22,
-                fontWeight: 'bold',
-              }}>
-              Q
-            </Text>
+            <Text style={{ color: colors.headingBlue, fontSize: 22, fontWeight: 'bold' }}>Q</Text>
           </TouchableOpacity>
 
+          {/* Analytics */}
           <TouchableOpacity
             style={styles(colors).iconButton}
             onPress={() => navigation.getParent()?.navigate('Analytics')}>
-            <Icon
-              name="analytics-outline"
-              size={26}
-              color={colors.headingBlue}
-            />
+            <Icon name="analytics-outline" size={26} color={colors.headingBlue} />
           </TouchableOpacity>
         </View>
-      </View>
 
-      {/* PRAYER LIST */}
+      </View>
+      {/* ---------------- END HEADER ---------------- */}
+
       <ScrollView
         style={styles(colors).container}
         contentContainerStyle={styles(colors).contentContainer}>
+
         {salahData ? (
-          PRAYER_NAMES.map(prayerName => {
-            const history = getHistoricalCompletionData(
-              prayerName,
-              GRID_DOTS_COUNT
-            );
-            const isCompletedToday =
-              history[history.length - 1]?.completed || false;
+          PRAYER_NAMES.map(prayer => {
+            const history = getHistoricalCompletionData(prayer, GRID_DOTS_COUNT);
+            const todayCompleted = history[history.length - 1]?.completed || false;
 
             return (
-              <PrayerCard
-                key={prayerName}
-                prayerName={prayerName}
-                isCompletedToday={isCompletedToday}
-                onToggle={togglePrayerCompletionToday}
-                historicalCompletionData={history}
-              />
+              <View key={prayer}>
+                <PrayerCard
+                  prayerName={prayer}
+                  isCompletedToday={todayCompleted}
+                  onToggle={togglePrayerCompletionToday}
+                  historicalCompletionData={history}
+                />
+              </View>
             );
           })
         ) : (
           <Text style={styles(colors).loadingText}>Loading Salah data...</Text>
         )}
+
       </ScrollView>
     </SafeAreaView>
   );
@@ -201,6 +182,7 @@ const styles = (colors: any) =>
       flex: 1,
       backgroundColor: colors.background,
     },
+
     header: {
       height: HEADER_HEIGHT,
       flexDirection: 'row',
@@ -209,28 +191,38 @@ const styles = (colors: any) =>
       paddingHorizontal: 10,
       backgroundColor: colors.background,
     },
-    logoContainer: {
-      flex: 1,
+
+    headerCenter: {
+      flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      marginTop: 4,
+      flex: 1,
     },
+
+    headerTitle: {
+      fontSize: 20,
+      fontWeight: 'bold',
+      color: colors.headerTitle,
+    },
+
+    iconButton: {
+      padding: 5,
+    },
+
     container: {
       flex: 1,
       backgroundColor: colors.background,
     },
+
     contentContainer: {
       paddingHorizontal: CARD_HORIZONTAL_PADDING,
       paddingBottom: 20,
     },
+
     loadingText: {
-      color: colors.secondaryText,
       textAlign: 'center',
-      marginTop: 50,
-      fontSize: 16,
-    },
-    iconButton: {
-      padding: 5,
+      marginTop: 40,
+      color: colors.secondaryText,
     },
   });
 
