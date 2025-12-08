@@ -1,17 +1,31 @@
-import React from 'react';
-import { View, ScrollView, StyleSheet, Text } from 'react-native';
+import React, { useEffect } from 'react';
+import {
+  View,
+  ScrollView,
+  StyleSheet,
+  Text,
+  LayoutAnimation,
+  Platform,
+  UIManager,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import Animated, { SlideInUp, ZoomIn } from 'react-native-reanimated';
 
 import MenuCard from '../components/MenuCard';
 import { useTheme } from '../theme/ThemeContext';
 import { menuStyles } from '../styles/menuStyles';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 import {
   MenuScreenNavigationProp,
   QuranSurahListScreenNavigationProp,
 } from '../navigation/types';
+
+// Enable LayoutAnimation on Android
+if (
+  Platform.OS === 'android' &&
+  UIManager.setLayoutAnimationEnabledExperimental
+) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 const MenuScreen = () => {
   const { colors, isDark } = useTheme();
@@ -19,56 +33,28 @@ const MenuScreen = () => {
     useNavigation<MenuScreenNavigationProp | QuranSurahListScreenNavigationProp>();
   const styles = menuStyles(isDark);
 
+  // Trigger layout animation on mount
+  useEffect(() => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+  }, []);
+
   // ⭐ Regular menu items
   const menuItems = [
-    {
-      title: 'Prayer Tracker',
-      iconName: 'clock-check-outline',
-      destination: 'Tracker',
-    },
-    {
-      title: 'Calendar View',
-      iconName: 'calendar-month-outline',
-      destination: 'Calendar',
-    },
-    {
-      title: 'Qaza Tracker',
-      iconName: 'alert-decagram-outline',
-      destination: 'QazaTracker',
-    },
-    {
-      title: 'Prayer Timings',
-      iconName: 'weather-sunset-up',
-      destination: 'PrayerTimings',
-    },
-    {
-      title: 'Quran',
-      iconName: 'book-open-variant',
-      destination: 'Quran',
-    },
-    {
-      title: 'Analytics & Insights',
-      iconName: 'chart-line',
-      destination: 'Analytics',
-    },
-    {
-      title: 'Settings',
-      iconName: 'cog-outline',
-      destination: 'Settings',
-    },
-    {
-      title: 'About App',
-      iconName: 'information-outline',
-      destination: 'AboutApp',
-    },
-    {
-      title: 'Privacy Policy',
-      iconName: 'shield-lock-outline',
-      destination: 'PrivacyPolicy',
-    },
+    { title: 'Prayer Tracker', iconName: 'clock-check-outline', destination: 'Tracker' },
+    { title: 'Calendar View', iconName: 'calendar-month-outline', destination: 'Calendar' },
+    { title: 'Qaza Tracker', iconName: 'alert-decagram-outline', destination: 'QazaTracker' },
+    { title: 'Prayer Timings', iconName: 'weather-sunset-up', destination: 'PrayerTimings' },
+    { title: 'Quran', iconName: 'book-open-variant', destination: 'Quran' },
+    { title: 'Analytics & Insights', iconName: 'chart-line', destination: 'Analytics' },
+
+    // ⭐ NEW VR VIDEOS BUTTON
+    { title: 'VR Videos', iconName: 'virtual-reality', destination: 'VRVideos' },
+
+    { title: 'Settings', iconName: 'cog-outline', destination: 'Settings' },
+    { title: 'About App', iconName: 'information-outline', destination: 'AboutApp' },
+    { title: 'Privacy Policy', iconName: 'shield-lock-outline', destination: 'PrivacyPolicy' },
   ];
 
-  // ⭐ Special Donation Tile (separate so we style it differently)
   const donationTile = {
     title: 'Buy Me a Coffee ❤️',
     iconName: 'heart-circle-outline',
@@ -100,34 +86,37 @@ const MenuScreen = () => {
         contentContainerStyle={[styles.cardGrid, { flexGrow: 1 }]}
         bounces={false}
       >
-        {/* Render all regular menu cards */}
-        {menuItems.map((item, index) => (
-          <View key={item.title} style={{ flexBasis: '50%' }}>
-            <Animated.View
-              entering={SlideInUp.delay(index * 100 + 100).duration(400)}
-            >
-              <MenuCard
-                title={item.title}
-                iconName={item.iconName}
-                onPress={() => handlePress(item.destination)}
-              />
-            </Animated.View>
+        {/* ⭐ Main Menu Items */}
+        {menuItems.map((item) => (
+          <View
+            key={item.title}
+            style={{ flexBasis: '50%' }}
+            onLayout={() => {
+              LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+            }}
+          >
+            <MenuCard
+              title={item.title}
+              iconName={item.iconName}
+              onPress={() => handlePress(item.destination)}
+            />
           </View>
         ))}
 
-        {/* ⭐ Special Donation Card — visually enhanced */}
-        <View key="donation" style={{ flexBasis: '50%' }}>
-          <Animated.View
-            entering={ZoomIn.duration(500)} // Slight zoom animation for emphasis
+        {/* ⭐ Special Donation Card */}
+        <View
+          key="donation"
+          style={{ flexBasis: '50%', marginTop: 10 }}
+          onLayout={() => {
+            LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+          }}
+        >
+          <View
             style={{
               borderWidth: 2,
-              borderColor: '#D4AF37', // Gold outline
+              borderColor: '#D4AF37',
               borderRadius: 16,
               overflow: 'hidden',
-              shadowColor: '#D4AF37',
-              shadowOpacity: 0.5,
-              shadowOffset: { width: 0, height: 4 },
-              shadowRadius: 10,
               elevation: 6,
             }}
           >
@@ -135,12 +124,11 @@ const MenuScreen = () => {
               title={donationTile.title}
               iconName={donationTile.iconName}
               onPress={() => handlePress(donationTile.destination)}
-              customBackground="gold" // Custom prop if your MenuCard supports it
+              customBackground="gold"
             />
-          </Animated.View>
+          </View>
         </View>
 
-        {/* Spacer */}
         <View style={{ height: 100 }} />
       </ScrollView>
     </View>

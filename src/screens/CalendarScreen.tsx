@@ -1,475 +1,357 @@
-import React, { useState, useEffect, useCallback, useContext } from 'react';
-import { useFocusEffect } from '@react-navigation/native';
-import { TouchableOpacity, View, Text, StyleSheet, ScrollView, Dimensions, StatusBar } from 'react-native';
-import { Gesture, GestureDetector, GestureHandlerRootView, Directions } from 'react-native-gesture-handler';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import Icon from 'react-native-vector-icons/Ionicons';
-import { ThemeContext } from '../theme/ThemeContext';
-import { runOnJS } from 'react-native-reanimated';   // <-- REQUIRED IMPORT FIX
+// ====================================================================
+// SALAH TRACKER – QUARTERLY CALENDAR (FINAL CLEAN VERSION)
+// ANCHOR HABITS STRUCTURE • PERFECT MONTH SPACING • VERTICAL WEEKDAYS
+// ====================================================================
 
-import { loadSalahTrackerData, SalahTrackerData, PrayerName, getTodayDate, saveSalahTrackerData } from '../storage/trackerStorage';
+import React, { useState, useEffect, useContext, useCallback } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  Dimensions,
+} from "react-native";
+import Icon from "react-native-vector-icons/Ionicons";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
-const PRAYER_NAMES: PrayerName[] = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+import { ThemeContext } from "../theme/ThemeContext";
+import {
+  loadSalahTrackerData,
+  saveSalahTrackerData,
+  SalahTrackerData,
+  PrayerName,
+  getTodayDate,
+} from "../storage/trackerStorage";
 
-// --- Constants for Extreme Compact Layout ---
-const STATUS_BAR_HEIGHT = 20;
-const BOTTOM_NAV_HEIGHT = 60;
-const HEADER_HEIGHT = 30;
-const PRAYER_NAME_HEIGHT = 16;
-const CARD_HORIZONTAL_PADDING = 4;
-const CARD_INNER_PADDING = 2;
-const CARD_MARGIN_VERTICAL = 3;
+// -------------------- WIDTH LOGIC --------------------
 
-// Calculate vertical dimensions for day cells to fit 5 cards
-const AVAILABLE_HEIGHT_FOR_CARDS_AREA = screenHeight - STATUS_BAR_HEIGHT - HEADER_HEIGHT - BOTTOM_NAV_HEIGHT;
-const TOTAL_VERTICAL_SPACE_PER_CARD_EXCEPT_GRID = PRAYER_NAME_HEIGHT + (CARD_INNER_PADDING * 2) + CARD_MARGIN_VERTICAL;
-const HEIGHT_PER_CARD_FOR_GRID = (AVAILABLE_HEIGHT_FOR_CARDS_AREA / PRAYER_NAMES.length) - TOTAL_VERTICAL_SPACE_PER_CARD_EXCEPT_GRID;
+const SCREEN_WIDTH = Dimensions.get("window").width;
 
-const NUM_WEEKDAY_ROWS = 7;
-const DAY_CELL_VERTICAL_MARGIN = 0.05;
+const WEEKDAY_COL_WIDTH = 32; // aligned nicely
+const H_PADDING = 20; // total horizontal padding of card
 
-const DAY_CELL_BASE_HEIGHT = Math.floor(HEIGHT_PER_CARD_FOR_GRID / NUM_WEEKDAY_ROWS);
-const DAY_CELL_ROW_HEIGHT = DAY_CELL_BASE_HEIGHT;
-const DAY_CELL_HEIGHT = DAY_CELL_BASE_HEIGHT - (DAY_CELL_VERTICAL_MARGIN * 2);
+const MONTH_WIDTH = (SCREEN_WIDTH - WEEKDAY_COL_WIDTH - H_PADDING) / 3;
 
-const WEEKDAY_COLUMN_WIDTH = 20;
-const TOTAL_MONTHS_DISPLAYED = 3;
-const AVAILABLE_WIDTH_FOR_MONTHS = screenWidth - (CARD_HORIZONTAL_PADDING * 2) - (CARD_INNER_PADDING * 2) - WEEKDAY_COLUMN_WIDTH - (TOTAL_MONTHS_DISPLAYED * 2);
-const MONTH_BLOCK_WIDTH = AVAILABLE_WIDTH_FOR_MONTHS / TOTAL_MONTHS_DISPLAYED;
-const DAY_CELL_WIDTH = Math.floor(MONTH_BLOCK_WIDTH / 7) - 2;
+const CELL = 15;
 
-const DAY_CELL_SIZE = Math.min(DAY_CELL_HEIGHT, DAY_CELL_WIDTH);
+const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
+// -------------------- MONTH MATRIX --------------------
 
-// --- Component Definitions ---
+const buildMonthMatrix = (year: number, month: number) => {
+  const firstDay = new Date(year, month, 1).getDay();
+  const lastDay = new Date(year, month + 1, 0).getDate();
 
-interface ThemeColors {
-  background: string;
-  cardBackground: string;
-  primaryAccent: string;
-  headerTitle: string;
-  secondaryText: string;
-  white: string;
-  grey: string;
-  parrotGreen: string;
-}
+  const matrix: (string | null)[][] = [];
+  let day = 1;
 
-interface DayCellProps {
-  date: string;
-  isCompleted: boolean;
-  onToggle: (prayer: PrayerName, date: string) => void;
-  prayerName: PrayerName;
-}
+  const firstRow = Array(7).fill(null);
+  for (let i = firstDay; i < 7; i++) {
+    firstRow[i] = String(day).padStart(2, "0");
+    day++;
+  }
+  matrix.push(firstRow);
 
-const DayCell: React.FC<DayCellProps> = ({ date, isCompleted, onToggle, prayerName }) => {
-  const { colors } = useContext(ThemeContext);
-  const todayStr = getTodayDate();
-  const isFutureDate = new Date(date) > new Date(todayStr);
-  const isCurrentDay = date === todayStr;
+  while (day <= lastDay) {
+    const row: (string | null)[] = [];
+    for (let i = 0; i < 7; i++) {
+      if (day <= lastDay) row.push(String(day).padStart(2, "0"));
+      else row.push(null);
+      day++;
+    }
+    matrix.push(row);
+  }
 
-  const textColor = isFutureDate ? colors.grey : (isCompleted ? colors.background : colors.secondaryText);
-
-  return (
-    <TouchableOpacity
-      style={[
-        styles(colors).dayCircle,
-        {
-          backgroundColor: isCompleted ? colors.primaryAccent : colors.cardBackground,
-          borderColor: isCurrentDay ? colors.primaryAccent : colors.cardBackground,
-          borderWidth: isCurrentDay ? 1 : 0,
-          marginVertical: DAY_CELL_VERTICAL_MARGIN,
-        },
-      ]}
-      onPress={() => !isFutureDate && onToggle(prayerName, date)}
-      disabled={isFutureDate}
-    >
-      <Text
-        style={[
-          styles(colors).dayText,
-          {
-            color: textColor,
-            fontWeight: isCurrentDay ? 'bold' : 'normal'
-          }
-        ]}
-      >
-        {date.split('-')[2]}
-      </Text>
-    </TouchableOpacity>
-  );
+  return matrix;
 };
 
-interface MonthGridProps {
-  monthData: { date: string; isCompleted: boolean; monthName: string; year: number }[];
-  onToggle: (prayer: PrayerName, date: string) => void;
-  prayerName: PrayerName;
-}
+// -------------------- ROTATE TO WEEKDAY GRID --------------------
 
-const MonthGrid: React.FC<MonthGridProps> = ({ monthData, onToggle, prayerName }) => {
-  const { colors } = useContext(ThemeContext);
-  const firstMonthInfo = monthData.find(d => !d.date.startsWith('empty'));
-  const monthTitle = firstMonthInfo ? `${firstMonthInfo.monthName.substring(0, 3)} ${firstMonthInfo.year % 100}` : '';
+const buildWeekdayGrid = (year: number, month: number) => {
+  const matrix = buildMonthMatrix(year, month);
+  const numWeeks = matrix.length;
 
-  return (
-    <View style={styles(colors).monthGridContainer}>
-      <Text style={styles(colors).monthGridTitle}>{monthTitle}</Text>
-      <View style={styles(colors).calendarGrid}>
-        {Array.from({ length: 7 }).map((_, dayOfWeekIndex) => (
-          <View key={`${prayerName}-${monthTitle}-${dayOfWeekIndex}`} style={styles(colors).calendarRow}>
-            {Array.from({ length: 5 }).map((_, weekIndex) => {
-              const firstDayOfMonth = new Date(monthData[0].year, new Date(monthData[0].date).getMonth(), 1).getDay();
-              const dayOfMonth = (weekIndex * 7) + dayOfWeekIndex - firstDayOfMonth + 1;
+  const grid: (string | null)[][] = Array(7)
+    .fill(null)
+    .map(() => Array(numWeeks).fill(null));
 
-              let item = null;
-              if (dayOfMonth > 0 && dayOfMonth <= new Date(monthData[0].year, new Date(monthData[0].date).getMonth() + 1, 0).getDate()) {
-                const date = new Date(monthData[0].year, new Date(monthData[0].date).getMonth(), dayOfMonth);
-                const formattedDate = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
-                item = monthData.find(d => d.date === formattedDate);
-              }
+  for (let w = 0; w < numWeeks; w++) {
+    for (let d = 0; d < 7; d++) {
+      grid[d][w] = matrix[w][d];
+    }
+  }
 
-              if (!item) {
-                return <View key={`empty-${dayOfWeekIndex}-${weekIndex}`} style={styles(colors).dayCellPlaceholder} />;
-              }
-              return (
-                <DayCell
-                  key={item.date}
-                  date={item.date}
-                  isCompleted={item.isCompleted}
-                  onToggle={onToggle}
-                  prayerName={prayerName}
-                />
-              );
-            })}
-          </View>
-        ))}
-      </View>
-    </View>
-  );
+  return { grid, numWeeks };
 };
 
-interface WeekdayLabelProps {
-  day: string;
-  colors: ThemeColors;
-}
+const PRAYERS: PrayerName[] = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"];
 
-const WeekdayLabel: React.FC<WeekdayLabelProps> = ({ day, colors }) => (
-  <View style={styles(colors).weekdayContainer}>
-    <Text style={styles(colors).weekdayText}>{day}</Text>
-  </View>
-);
+// -------------------- MAIN SCREEN --------------------
 
+const CalendarScreen: React.FC = () => {
+  const { colors } = useContext(ThemeContext);
 
-export const CalendarScreen: React.FC = () => {
-  const { colors, isDark } = useContext(ThemeContext);
   const [salahData, setSalahData] = useState<SalahTrackerData | null>(null);
-  const [prayerQuarters, setPrayerQuarters] = useState<{ prayerName: PrayerName, monthsData: { date: string; isCompleted: boolean; monthName: string; year: number }[][] }[]>([]);
-  const [currentQuarterStartMonth, setCurrentQuarterStartMonth] = useState(() => {
-    const currentMonth = new Date().getMonth();
-    return Math.floor(currentMonth / 3) * 3;
-  });
+  const todayStr = getTodayDate();
+  const today = new Date();
 
-  const fetchSalahData = useCallback(async () => {
-    const data = await loadSalahTrackerData();
-    setSalahData(data);
-  }, []);
-
-  const generatePrayerQuarters = useCallback((data: SalahTrackerData) => {
-    const allPrayerQuarters = PRAYER_NAMES.map((prayerName) => {
-      const allMonthsDataForPrayer: { date: string; isCompleted: boolean; monthName: string; year: number }[][] = [];
-      const today = new Date();
-      const currentYear = today.getFullYear();
-
-      for (let monthIndex = 0; monthIndex < 12; monthIndex++) {
-        const currentMonthDate = new Date(currentYear, monthIndex, 1);
-        const monthName = currentMonthDate.toLocaleString('default', { month: 'long' });
-        const year = currentMonthDate.getFullYear();
-        const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
-        const monthDays: { date: string; isCompleted: boolean; monthName: string; year: number }[] = [];
-
-        for (let day = 1; day <= daysInMonth; day++) {
-          const date = new Date(year, monthIndex, day);
-          const formattedDate = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
-          monthDays.push({ date: formattedDate, isCompleted: data[prayerName]?.[formattedDate] || false, monthName, year });
-        }
-
-        allMonthsDataForPrayer.push(monthDays);
-      }
-
-      return { prayerName, monthsData: allMonthsDataForPrayer };
-    });
-    setPrayerQuarters(allPrayerQuarters);
-  }, []);
-
-  const handlePreviousQuarter = () => {
-    setCurrentQuarterStartMonth((prev) => Math.max(0, prev - 3));
-  };
-
-  const handleNextQuarter = () => {
-    setCurrentQuarterStartMonth((prev) => Math.min(9, prev + 3));
-  };
-
-  const togglePrayerCompletion = useCallback(
-    async (prayerName: PrayerName, date: string) => {
-      const todayStr = getTodayDate();
-      const isFutureDate = new Date(date) > new Date(todayStr);
-      if (!salahData || isFutureDate) return;
-
-      const updatedData = {
-        ...salahData,
-        [prayerName]: {
-          ...salahData[prayerName],
-          [date]: !salahData[prayerName]?.[date],
-        },
-      };
-      setSalahData(updatedData);
-      await saveSalahTrackerData(updatedData);
-      generatePrayerQuarters(updatedData);
-    },
-    [salahData, generatePrayerQuarters]
-  );
-
-  const handleMarkAllComplete = useCallback(
-    async (prayerName: PrayerName) => {
-      if (!salahData) return;
-      const updatedData = { ...salahData };
-      const todayStr = getTodayDate();
-
-      if (!updatedData[prayerName]) {
-        updatedData[prayerName] = {};
-      }
-      updatedData[prayerName][todayStr] = !updatedData[prayerName]?.[todayStr];
-
-      setSalahData(updatedData);
-      await saveSalahTrackerData(updatedData);
-      generatePrayerQuarters(updatedData);
-    },
-    [salahData, generatePrayerQuarters]
-  );
-
-  useFocusEffect(
-    useCallback(() => {
-      fetchSalahData();
-    }, [fetchSalahData])
+  const [year, setYear] = useState(today.getFullYear());
+  const [quarterStart, setQuarterStart] = useState(
+    Math.floor(today.getMonth() / 3) * 3
   );
 
   useEffect(() => {
-    if (salahData) {
-      generatePrayerQuarters(salahData);
-    }
-  }, [salahData, generatePrayerQuarters]);
+    (async () => {
+      const d = await loadSalahTrackerData();
+      setSalahData(d);
+    })();
+  }, []);
 
-  const weekDays = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+  const toggleDay = useCallback(
+    async (prayer: PrayerName, date: string) => {
+      if (!salahData) return;
 
+      const updated = {
+        ...salahData,
+        [prayer]: {
+          ...salahData[prayer],
+          [date]: !salahData[prayer]?.[date],
+        },
+      };
+
+      setSalahData(updated);
+      await saveSalahTrackerData(updated);
+    },
+    [salahData]
+  );
+
+  const quarterMonths = [quarterStart, quarterStart + 1, quarterStart + 2];
+
+  const goPrevQuarter = () => {
+    if (quarterStart === 0) {
+      setYear((y) => y - 1);
+      setQuarterStart(9);
+    } else setQuarterStart((q) => q - 3);
+  };
+
+  const goNextQuarter = () => {
+    if (quarterStart === 9) {
+      setYear((y) => y + 1);
+      setQuarterStart(0);
+    } else setQuarterStart((q) => q + 3);
+  };
 
   return (
-    <SafeAreaView style={styles(colors).safeArea}>
-      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
-      <View style={styles(colors).header}>
-        <Text style={[styles(colors).headerTitle, { color: colors.headingBlue }]}>Calendar View</Text>
+    <SafeAreaView style={styles.container(colors)}>
+      <Text style={styles.title(colors)}>Calendar View</Text>
+
+      <View style={styles.quarterRow}>
+        <TouchableOpacity onPress={goPrevQuarter}>
+          <Icon name="chevron-back" size={22} color={colors.primaryAccent} />
+        </TouchableOpacity>
+
+        <Text style={styles.quarterText(colors)}>
+          Quarter {quarterStart / 3 + 1} · {year}
+        </Text>
+
+        <TouchableOpacity onPress={goNextQuarter}>
+          <Icon name="chevron-forward" size={22} color={colors.primaryAccent} />
+        </TouchableOpacity>
       </View>
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <ScrollView style={styles(colors).container} contentContainerStyle={styles(colors).contentContainer}>
-          {prayerQuarters.length > 0 ? (
-            prayerQuarters.map((prayerQuarter) => {
-              const currentQuarterMonths = prayerQuarter.monthsData.slice(
-                currentQuarterStartMonth,
-                currentQuarterStartMonth + 3
-              );
 
-              // --- FIXED GESTURES WITH runOnJS ---
-              const fling = Gesture.Fling()
-                .direction(Directions.LEFT)
-                .onEnd(() => {
-                  'worklet';
-                  runOnJS(handleNextQuarter)();
-                });
+      <ScrollView>
+        {PRAYERS.map((prayer) => (
+          <View key={prayer} style={styles.card(colors)}>
+            <View style={styles.cardHeader}>
+              <Text style={styles.prayerName(colors)}>{prayer}</Text>
+              <TouchableOpacity onPress={() => toggleDay(prayer, todayStr)}>
+                <Icon name="checkmark-circle" size={18} color={colors.primaryAccent} />
+              </TouchableOpacity>
+            </View>
 
-              const flingRight = Gesture.Fling()
-                .direction(Directions.RIGHT)
-                .onEnd(() => {
-                  'worklet';
-                  runOnJS(handlePreviousQuarter)();
-                });
-              // ------------------------------------
+            {/* ---- CONSTANT WEEKDAY COLUMN ---- */}
+            <View style={styles.fullRow}>
+              <View style={styles.weekdayColumn}>
+                {WEEKDAYS.map((w) => (
+                  <Text key={w} style={styles.weekday(colors)}>
+                    {w}
+                  </Text>
+                ))}
+              </View>
 
-              return (
-                <GestureDetector key={prayerQuarter.prayerName} gesture={Gesture.Race(fling, flingRight)}>
-                  <View style={styles(colors).prayerCardContainer}>
-                    <View style={styles(colors).prayerCardHeader}>
-                      <Text style={styles(colors).prayerNameText}>{prayerQuarter.prayerName}</Text>
-                      <TouchableOpacity
-                        style={styles(colors).markAllCompleteButton}
-                        onPress={() => handleMarkAllComplete(prayerQuarter.prayerName)}
-                      >
-                        <Icon name="checkmark-circle" size={20} color={colors.primaryAccent} />
-                      </TouchableOpacity>
-                    </View>
+              {/* ---- THREE MONTHS ---- */}
+              {quarterMonths.map((monthIndex) => {
+                const { grid, numWeeks } = buildWeekdayGrid(year, monthIndex);
 
-                    <View style={styles(colors).quarterViewWrapper}>
-                      <View style={styles(colors).weekdaysColumn}>
-                        {weekDays.map((day) => (
-                          <WeekdayLabel key={day} day={day} colors={colors} />
-                        ))}
+                return (
+                  <View key={monthIndex} style={styles.monthColumn}>
+                    <Text style={styles.monthLabel(colors)}>
+                      {new Date(year, monthIndex).toLocaleString("default", {
+                        month: "short",
+                      })}{" "}
+                      {String(year).slice(2)}
+                    </Text>
+
+                    {WEEKDAYS.map((wd, weekdayIndex) => (
+                      <View key={wd} style={styles.row}>
+                        {Array.from({ length: numWeeks }).map((_, weekIndex) => {
+                          const day = grid[weekdayIndex][weekIndex];
+
+                          if (!day)
+                            return <View key={weekIndex} style={styles.emptyCell} />;
+
+                          const dateString = `${year}-${String(
+                            monthIndex + 1
+                          ).padStart(2, "0")}-${day}`;
+
+                          const done = salahData?.[prayer]?.[dateString];
+                          const isToday = dateString === todayStr;
+
+                          return (
+                            <TouchableOpacity
+                              key={weekIndex}
+                              onPress={() => toggleDay(prayer, dateString)}
+                              style={[
+                                styles.dateCell(colors),
+                                done && { backgroundColor: colors.primaryAccent },
+                                isToday && {
+                                  borderWidth: 1,
+                                  borderColor: colors.primaryAccent,
+                                },
+                              ]}
+                            >
+                              <Text
+                                style={[
+                                  styles.dateText(colors),
+                                  done && { color: colors.background },
+                                ]}
+                              >
+                                {day}
+                              </Text>
+                            </TouchableOpacity>
+                          );
+                        })}
                       </View>
-                      <View style={styles(colors).threeMonthsGridContainer}>
-                        {currentQuarterMonths.map((monthData) => (
-                          <View key={`${prayerQuarter.prayerName}-${monthData[0].monthName}-${monthData[0].year}`} style={styles(colors).monthContainer}>
-                            <MonthGrid
-                              prayerName={prayerQuarter.prayerName}
-                              monthData={monthData}
-                              onToggle={togglePrayerCompletion}
-                            />
-                          </View>
-                        ))}
-                      </View>
-                    </View>
+                    ))}
                   </View>
-                </GestureDetector>
-              );
-            })
-          ) : (
-            <Text style={styles(colors).loadingText}>Loading calendar data...</Text>
-          )}
-        </ScrollView>
-      </GestureHandlerRootView>
+                );
+              })}
+            </View>
+          </View>
+        ))}
+      </ScrollView>
     </SafeAreaView>
   );
 };
 
-
-// --- Styles ---
-
-const styles = (colors: ThemeColors) => StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  header: {
-    paddingVertical: 0,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.background,
-    height: HEADER_HEIGHT,
-    paddingHorizontal: 10,
-  },
-  navButton: {
-    padding: 5,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: colors.headerTitle,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  contentContainer: {
-    paddingHorizontal: CARD_HORIZONTAL_PADDING,
-    paddingBottom: 20,
-  },
-  loadingText: {
-    color: colors.secondaryText,
-    textAlign: 'center',
-    marginTop: 50,
-    fontSize: 16,
-  },
-  prayerCardContainer: {
-    marginBottom: CARD_MARGIN_VERTICAL,
-    backgroundColor: colors.cardBackground,
-    borderRadius: 9,
-    paddingVertical: CARD_INNER_PADDING,
-    paddingHorizontal: CARD_INNER_PADDING * 2,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.22,
-    shadowRadius: 2.22,
-  },
-  prayerCardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  prayerNameText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: colors.parrotGreen,
-  },
-  markAllCompleteButton: {
-    padding: 5,
-  },
-  quarterViewWrapper: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  weekdaysColumn: {
-    flexDirection: 'column',
-    justifyContent: 'flex-start',
-    marginRight: 4,
-    paddingTop: 0,
-  },
-  weekdayContainer: {
-    height: DAY_CELL_ROW_HEIGHT,
-    width: WEEKDAY_COLUMN_WIDTH,
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    paddingBottom: 3,
-  },
-  weekdayText: {
-    fontSize: 9,
-    color: colors.secondaryText,
-    fontWeight: 'normal',
-  },
-  threeMonthsGridContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    flex: 1,
-    marginTop: -12,
-  },
-  monthContainer: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  monthGridContainer: {
-    alignItems: 'center',
-  },
-  monthGridTitle: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: colors.secondaryText,
-    marginBottom: 2,
-    textAlign: 'center',
-  },
-  calendarGrid: {
-    flexDirection: 'column',
-    width: '100%',
-  },
-  calendarRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
-    minHeight: DAY_CELL_ROW_HEIGHT,
-  },
-  dayCellPlaceholder: {
-    width: DAY_CELL_SIZE,
-    height: DAY_CELL_SIZE,
-    marginVertical: DAY_CELL_VERTICAL_MARGIN,
-  },
-  dayCircle: {
-    width: DAY_CELL_SIZE,
-    height: DAY_CELL_SIZE,
-    borderRadius: DAY_CELL_SIZE / 2,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  dayText: {
-    fontSize: 9,
-    color: colors.secondaryText,
-  },
-});
-
 export default CalendarScreen;
+
+// ====================================================================
+// STYLES — CLEAN, EVEN SPACING, PERFECT ALIGNMENT
+// ====================================================================
+
+const styles = {
+  container: (colors: any) => ({
+    flex: 1,
+    backgroundColor: colors.background,
+  }),
+
+  title: (colors: any) => ({
+    fontSize: 20,
+    textAlign: "center",
+    fontWeight: "bold",
+    color: colors.headingBlue,
+    marginTop: 6,
+    marginBottom: 4,
+  }),
+
+  quarterRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 40,
+    marginBottom: 2,
+  },
+
+  quarterText: (colors: any) => ({
+    fontSize: 15,
+    fontWeight: "600",
+    color: colors.primaryAccent,
+  }),
+
+  card: (colors: any) => ({
+    backgroundColor: colors.cardBackground,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    marginHorizontal: 8,
+    marginBottom: 10,
+  }),
+
+  cardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 6,
+  },
+
+  prayerName: (colors: any) => ({
+    fontSize: 16,
+    fontWeight: "bold",
+    color: colors.parrotGreen,
+  }),
+
+  fullRow: {
+    flexDirection: "row",
+    width: SCREEN_WIDTH - 20,
+    alignSelf: "center",
+    marginTop: 6,
+  },
+
+  weekdayColumn: {
+    width: WEEKDAY_COL_WIDTH,
+  },
+
+  weekday: (colors: any) => ({
+    fontSize: 10,
+    height: CELL,
+    textAlign: "right",
+    paddingRight: 3,
+    color: colors.secondaryText,
+  }),
+
+  monthColumn: {
+    width: MONTH_WIDTH,
+    alignItems: "center",
+    marginTop: -14,
+  },
+
+  monthLabel: (colors: any) => ({
+    fontSize: 11,
+    color: colors.headingBlue,
+    marginBottom: 2,
+  }),
+
+  row: {
+    flexDirection: "row",
+  },
+
+  emptyCell: {
+    width: CELL,
+    height: CELL,
+    marginHorizontal: 1,
+  },
+
+  dateCell: (colors: any) => ({
+    width: CELL,
+    height: CELL,
+    justifyContent: "center",
+    alignItems: "center",
+    marginHorizontal: 1,
+    borderRadius: 2,
+    backgroundColor: colors.cardBackground,
+  }),
+
+  dateText: (colors: any) => ({
+    fontSize: 9,
+    color: colors.secondaryText,
+  }),
+};

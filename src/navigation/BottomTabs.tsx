@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { TrackerScreen } from '../screens/TrackerScreen';
-import { CalendarScreen } from '../screens/CalendarScreen';
+import CalendarScreen from '../screens/CalendarScreen';
 import MenuScreen from '../screens/MenuScreen';
 import { ThemeContext } from '../theme/ThemeContext';
 import Icon from 'react-native-vector-icons/Ionicons';

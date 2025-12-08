@@ -1,11 +1,6 @@
-import React, { FC } from 'react';
-import { StyleSheet, Text, View, Pressable } from 'react-native';
+import React, { FC, useState } from 'react';
+import { StyleSheet, Text, View, Pressable, Animated } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-} from 'react-native-reanimated';
 import { useTheme } from '../theme/ThemeContext';
 
 interface MenuCardProps {
@@ -16,50 +11,58 @@ interface MenuCardProps {
 
 const MenuCard: FC<MenuCardProps> = ({ title, iconName, onPress }) => {
   const { colors, isDark } = useTheme();
-  const scale = useSharedValue(1);
 
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ scale: scale?.value ?? 1 }],
-    };
-  });
-
-  const titleColor = colors.headingBlue;
-  const backgroundColor = isDark ? colors.cardBackground : colors.white;
-  const iconColor = isDark ? colors.white : colors.headerTitle;
+  // 🔹 Simple Animated.Value for scale (no Reanimated needed)
+  const scale = useState(new Animated.Value(1))[0];
 
   const handlePressIn = () => {
-    scale.value = withSpring(0.97, { damping: 15, stiffness: 300 });
+    Animated.spring(scale, {
+      toValue: 0.95,
+      useNativeDriver: true,
+      speed: 20,
+      bounciness: 6,
+    }).start();
   };
 
   const handlePressOut = () => {
-    scale.value = withSpring(1, { damping: 15, stiffness: 300 });
+    Animated.spring(scale, {
+      toValue: 1,
+      useNativeDriver: true,
+      speed: 20,
+      bounciness: 6,
+    }).start();
   };
 
-  const staticShadowStyle = isDark ? styles.darkShadow : styles.lightShadow;
+  const animatedStyle = {
+    transform: [{ scale }],
+  };
 
   return (
     <Pressable
       onPress={onPress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
+      android_ripple={{ color: colors.primaryAccent + '33' }}
       style={[
         styles.cardContainer,
         {
-          backgroundColor,
-          ...staticShadowStyle,
+          backgroundColor: isDark ? colors.cardBackground : colors.white,
+          shadowColor: isDark ? '#FFF' : '#000',
         },
       ]}
     >
-      <Animated.View style={[animatedStyle, styles.contentContainer]}>
+      <Animated.View style={[styles.contentContainer, animatedStyle]}>
         <View style={styles.iconWrapper}>
           <MaterialCommunityIcons
             name={iconName}
             size={40}
-            color={iconColor}
+            color={isDark ? colors.white : colors.headerTitle}
           />
         </View>
-        <Text style={[styles.title, { color: titleColor }]}>{title}</Text>
+
+        <Text style={[styles.title, { color: colors.headingBlue }]}>
+          {title}
+        </Text>
       </Animated.View>
     </Pressable>
   );
@@ -74,28 +77,23 @@ const styles = StyleSheet.create({
     padding: 15,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  lightShadow: {
-    shadowColor: '#000',
+
+    // Shadows
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.15,
     shadowRadius: 5,
     elevation: 5,
   },
-  darkShadow: {
-    shadowColor: '#FFFFFF',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 8,
-  },
+
   contentContainer: {
     justifyContent: 'center',
     alignItems: 'center',
   },
+
   iconWrapper: {
     marginBottom: 10,
   },
+
   title: {
     fontSize: 14,
     fontWeight: '600',

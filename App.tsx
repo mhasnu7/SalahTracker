@@ -1,4 +1,3 @@
-import 'react-native-reanimated';
 import 'react-native-gesture-handler';
 import React, { useContext, useEffect } from 'react';
 import {
@@ -13,6 +12,7 @@ import { StatusBar, StyleSheet } from 'react-native';
 import { BottomTabs } from './src/navigation/BottomTabs';
 import { ThemeContext, ThemeProvider } from './src/theme/ThemeContext';
 
+// Screens
 import MenuScreen from './src/screens/MenuScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import { ThemesScreen } from './src/screens/ThemesScreen';
@@ -26,21 +26,26 @@ import SurahDetailsScreen from './src/screens/SurahDetails';
 import AboutAppScreen from './src/screens/AboutAppScreen';
 import PrivacyPolicyScreen from './src/screens/PrivacyPolicyScreen';
 import NotificationsScreen from './src/screens/NotificationsScreen';
-import SupportUsScreen from './src/screens/SupportUsScreen';   // ⭐ NEW SUPPORT PAGE
+import SupportUsScreen from './src/screens/SupportUsScreen';
 
 import AnimatedSplash from './src/screens/AnimatedSplash';
 
+// ⭐ VR Screens
+import VRVideosScreen from './src/screens/VRVideosScreen';
+import VRPlayerScreen from './src/screens/VRPlayerScreen';
+
 import { RootStackParamList, QuranStackParamList } from './src/navigation/types';
 
-// ⭐ NEW: Import Notifee channel setup
+// Notifications
 import { createChannel } from './src/utils/notificationManager';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const QuranStack = createNativeStackNavigator<QuranStackParamList>();
 
-// Quran nested navigator
+// ⭐ Quran nested navigator
 const QuranNavigator = () => {
   const { colors } = useContext(ThemeContext);
+
   return (
     <QuranStack.Navigator
       screenOptions={{
@@ -55,10 +60,13 @@ const QuranNavigator = () => {
         component={QuranSurahListScreen}
         options={{ title: 'Quran Surahs' }}
       />
+
       <QuranStack.Screen
         name="SurahDetails"
         component={SurahDetailsScreen}
-        options={({ route }) => ({ title: route.params.surahName })}
+        options={({ route }) => ({
+          title: route.params.surahName,
+        })}
       />
     </QuranStack.Navigator>
   );
@@ -75,7 +83,6 @@ function App() {
 function AppContent() {
   const { isDark, colors } = useContext(ThemeContext);
 
-  // ⭐ Initialize Notifee Notification Channel
   useEffect(() => {
     createChannel();
   }, []);
@@ -103,98 +110,25 @@ function AppContent() {
       <NavigationContainer theme={navigationTheme}>
         <Stack.Navigator screenOptions={{ headerShown: false }}>
 
-          {/* ⭐ SPLASH SCREEN FIRST */}
+          {/* Splash Screen */}
           <Stack.Screen name="AnimatedSplash" component={AnimatedSplash} />
 
-          {/* MAIN APP */}
+          {/* Main App */}
           <Stack.Screen name="BottomTabs" component={BottomTabs} />
 
+          {/* Menu */}
           <Stack.Screen name="Menu" component={MenuScreen} />
 
-          <Stack.Screen
-            name="Settings"
-            component={SettingsScreen}
-            options={{
-              headerShown: true,
-              headerTitle: 'Settings',
-              headerTitleAlign: 'center',
-              headerStyle: { backgroundColor: colors.background },
-              headerTintColor: colors.headerTitle,
-            }}
-          />
+          {/* Standard Routes */}
+          <Stack.Screen name="Settings" component={SettingsScreen} options={header(colors, 'Settings')} />
+          <Stack.Screen name="Themes" component={ThemesScreen} options={header(colors, 'Select Theme')} />
+          <Stack.Screen name="ResetSalah" component={ResetSalahScreen} options={header(colors, 'Reset Salah Data')} />
+          <Stack.Screen name="Analytics" component={AnalyticsScreen} options={header(colors, 'Salah Analytics')} />
+          <Stack.Screen name="QazaIntro" component={QazaIntroScreen} options={header(colors, 'Qaza Introduction')} />
+          <Stack.Screen name="QazaTracker" component={QazaTrackerScreen} options={header(colors, 'Qaza Tracker')} />
+          <Stack.Screen name="PrayerTimings" component={PrayerTimingsScreen} options={header(colors, 'Prayer Timings')} />
 
-          <Stack.Screen
-            name="Themes"
-            component={ThemesScreen}
-            options={{
-              headerShown: true,
-              headerTitle: 'Select Theme',
-              headerTitleAlign: 'center',
-              headerStyle: { backgroundColor: colors.background },
-              headerTintColor: colors.headerTitle,
-            }}
-          />
-
-          <Stack.Screen
-            name="ResetSalah"
-            component={ResetSalahScreen}
-            options={{
-              headerShown: true,
-              headerTitle: 'Reset Salah Data',
-              headerTitleAlign: 'center',
-              headerStyle: { backgroundColor: colors.background },
-              headerTintColor: colors.headerTitle,
-            }}
-          />
-
-          <Stack.Screen
-            name="Analytics"
-            component={AnalyticsScreen}
-            options={{
-              headerShown: true,
-              headerTitle: 'Salah Analytics',
-              headerTitleAlign: 'center',
-              headerStyle: { backgroundColor: colors.background },
-              headerTintColor: colors.headerTitle,
-            }}
-          />
-
-          <Stack.Screen
-            name="QazaIntro"
-            component={QazaIntroScreen}
-            options={{
-              headerShown: true,
-              headerTitle: 'Qaza Introduction',
-              headerTitleAlign: 'center',
-              headerStyle: { backgroundColor: colors.background },
-              headerTintColor: colors.headerTitle,
-            }}
-          />
-
-          <Stack.Screen
-            name="QazaTracker"
-            component={QazaTrackerScreen}
-            options={{
-              headerShown: true,
-              headerTitle: 'Qaza Tracker',
-              headerTitleAlign: 'center',
-              headerStyle: { backgroundColor: colors.background },
-              headerTintColor: colors.headerTitle,
-            }}
-          />
-
-          <Stack.Screen
-            name="PrayerTimings"
-            component={PrayerTimingsScreen}
-            options={{
-              headerShown: true,
-              headerTitle: 'Prayer Timings',
-              headerTitleAlign: 'center',
-              headerStyle: { backgroundColor: colors.background },
-              headerTintColor: colors.headerTitle,
-            }}
-          />
-
+          {/* Quran */}
           <Stack.Screen
             name="Quran"
             component={QuranNavigator}
@@ -204,69 +138,32 @@ function AppContent() {
           <Stack.Screen
             name="SurahDetails"
             component={SurahDetailsScreen}
-            options={({ route }) => ({
-              headerShown: true,
-              headerTitle: route.params.surahName,
-              headerTitleAlign: 'center',
-              headerStyle: { backgroundColor: colors.background },
-              headerTintColor: colors.headerTitle,
-            })}
+            options={({ route }) => header(colors, route.params.surahName)}
           />
 
-          <Stack.Screen
-            name="AboutApp"
-            component={AboutAppScreen}
-            options={{
-              headerShown: true,
-              headerTitle: 'About App',
-              headerTitleAlign: 'center',
-              headerStyle: { backgroundColor: colors.background },
-              headerTintColor: colors.headerTitle,
-            }}
-          />
+          <Stack.Screen name="AboutApp" component={AboutAppScreen} options={header(colors, 'About App')} />
+          <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} options={header(colors, 'Privacy Policy')} />
+          <Stack.Screen name="Notifications" component={NotificationsScreen} options={header(colors, 'Notifications')} />
+          <Stack.Screen name="SupportUs" component={SupportUsScreen} options={header(colors, 'Support Us')} />
 
-          <Stack.Screen
-            name="PrivacyPolicy"
-            component={PrivacyPolicyScreen}
-            options={{
-              headerShown: true,
-              headerTitle: 'Privacy Policy',
-              headerTitleAlign: 'center',
-              headerStyle: { backgroundColor: colors.background },
-              headerTintColor: colors.headerTitle,
-            }}
-          />
-
-          <Stack.Screen
-            name="Notifications"
-            component={NotificationsScreen}
-            options={{
-              headerShown: true,
-              headerTitle: 'Notifications',
-              headerTitleAlign: 'center',
-              headerStyle: { backgroundColor: colors.background },
-              headerTintColor: colors.headerTitle,
-            }}
-          />
-
-          {/* ⭐ SUPPORT US PAGE */}
-          <Stack.Screen
-            name="SupportUs"
-            component={SupportUsScreen}
-            options={{
-              headerShown: true,
-              headerTitle: 'Support Us',
-              headerTitleAlign: 'center',
-              headerStyle: { backgroundColor: colors.background },
-              headerTintColor: colors.headerTitle,
-            }}
-          />
+          {/* ⭐ VR Screens */}
+          <Stack.Screen name="VRVideos" component={VRVideosScreen} options={header(colors, 'VR Videos')} />
+          <Stack.Screen name="VRPlayer" component={VRPlayerScreen} options={header(colors, 'VR Player')} />
 
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>
   );
 }
+
+// Reusable Header
+const header = (colors: any, title: string) => ({
+  headerShown: true,
+  headerTitle: title,
+  headerTitleAlign: 'center',
+  headerStyle: { backgroundColor: colors.background },
+  headerTintColor: colors.headerTitle,
+});
 
 const styles = StyleSheet.create({
   container: {
